@@ -64,6 +64,6 @@ void Jacobi(double(*p)[COL],double dx, double dy, double tol)
             for (j=0;j<COL;j++){
                 p[i][j] = p_new[i][j];}}
          
-        //printf("Iteration : %d, SUM1 : %f, SUM2 : %f, Ratio : %f \n",it,SUM1,SUM2,SUM2/SUM1);
+        printf("Iteration : %d, SUM1 : %f, SUM2 : %f, Ratio : %f \n",it,SUM1,SUM2,SUM2/SUM1);
     }
 }

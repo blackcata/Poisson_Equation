@@ -77,6 +77,8 @@ int main(void)
     
     file_name = "Jacobi_result.plt";
     write_u(file_name,u,dx,dy);
+
+    file_name = "Analytic_solution.plt";
     func_anal(u_anal,ROW,COL,dx,dy);
     write_u(file_name,u_anal,dx,dy);
 
