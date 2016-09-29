@@ -34,6 +34,8 @@
 #include "def.h"
 
 void Jacobi(double(*p)[COL],double dx, double dy, double tol);
+void SOR(double(*p)[COL],double dx, double dy, double tol, double omega);
+
 void print_u_array(double (*p)[COL]);
 void initialization(double (*p)[COL]);
 void write_u(char *file_nm, double(*p)[COL],double dx, double dy);
@@ -64,7 +66,7 @@ int main(void)
     dy = Ly/Ny;
 
     tol = 1e-6;
-    omega = 1.0;
+    omega = 1.8;
     
     printf("\n");
     printf("Nx : %d, Ny : %d, dx : %f, dy : %f \n",Nx,Ny,dx,dy);
@@ -78,9 +80,22 @@ int main(void)
     
     file_name = "Jacobi_result.plt";
     write_u(file_name,u,dx,dy);
-
+    
+    //---------------------------
+    //     SOR Method
+    //---------------------------
+    initialization(u);
+    SOR(u,dx,dy,tol,omega);
+    
+    file_name = "SOR_result.plt";
+    write_u(file_name,u,dx,dy);
+    
+    //---------------------------
+    //     Analytic Solutions
+    //---------------------------
     file_name = "Analytic_solution.plt";
     func_anal(u_anal,ROW,COL,dx,dy);
+    write_u(file_name,u,dx,dy);
     
     return 0;
 }
