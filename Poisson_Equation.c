@@ -30,10 +30,12 @@
 
 
 #include <stdio.h>
+#include <math.h>
 #include "def.h"
 
 void Jacobi(double(*p)[COL],double dx, double dy, double tol);
-void initialization(double(*p)[COL]);
+void print_u_array(double (*p)[COL]);
+void initialization(double (*p)[COL]);
 void write_u(char *file_nm, double(*p)[COL],double dx, double dy);
 void func_anal(double(*p)[COL], int row_num, int col_num, double dx, double dy);
 
@@ -64,32 +66,41 @@ int main(void)
     tol = 1e-6;
     omega = 1.0;
     
-    
-//    initialization(u);
-    Jacobi(u,dx,dy,tol);
     printf("\n");
     printf("Nx : %d, Ny : %d, dx : %f, dy : %f \n",Nx,Ny,dx,dy);
     printf("Tolerance : %f, Omega : %f \n",tol, omega);
     
     //---------------------------
-    //     Writing variables
+    //     Jacobi Method
     //---------------------------
+    initialization(u);
+    Jacobi(u,dx,dy,tol);
     
     file_name = "Jacobi_result.plt";
     write_u(file_name,u,dx,dy);
 
     file_name = "Analytic_solution.plt";
     func_anal(u_anal,ROW,COL,dx,dy);
-    write_u(file_name,u_anal,dx,dy);
+    
     return 0;
 }
 
-void initialization(double(*p)[COL])
+void print_u_array(double (*p)[COL])
 {
     int i,j;
     for (i=0;i<ROW;i++){
         for (j=0;j<COL;j++){
-            p[i][j] = 100*i+j; }}
+            printf("%d %d %lf \n",i,j,p[i][j]); }}
+
+}
+
+void initialization(double (*p)[COL])
+{
+    int i,j;
+    for (i=0;i<ROW;i++){
+        for (j=0;j<COL;j++){
+            p[i][j] = 0; }}
+
 }
 
 void write_u(char *file_nm, double(*p)[COL],double dx, double dy)
@@ -106,7 +117,7 @@ void write_u(char *file_nm, double(*p)[COL],double dx, double dy)
 }
 
 
-double func(int i, int j, double dx, double dy)
+double func(int i,int j,double dx,double dy)
 {
     return sin(pi*i*dx)*cos(pi*j*dy);
 }

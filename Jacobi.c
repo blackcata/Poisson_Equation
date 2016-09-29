@@ -22,9 +22,7 @@ void Jacobi(double(*p)[COL],double dx, double dy, double tol)
             p_new[i][j] =  (p[i+1][j]+p[i-1][j]
                             + pow(beta,2) *(p[i][j+1]+p[i][j-1])
                             - dx*dx*func(i,j,dx,dy))/(2*(1+pow(beta,2)));
-                
-//            printf(" %d %d %f \n",i,j,p_new[i][j]);
-                            }
+            }
         }
 
         //------------------------
