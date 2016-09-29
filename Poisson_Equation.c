@@ -32,22 +32,13 @@
 #include <stdio.h>
 #include "def.h"
 
-//#define ROW 11
-//#define COL 11
-//#define pi 3.141592
-//#define itmax 1000000
 void Jacobi(double(*p)[COL],double dx, double dy, double tol);
 void initialization(double(*p)[COL]);
 void write_u(char *file_nm, double(*p)[COL],double dx, double dy);
+void func_anal(double(*p)[COL], int row_num, int col_num, double dx, double dy);
+
 double func(int i, int j, double dx, double dy);
-            
-//void test(double(*p)[COL])
-//{
-//    int Nx,Ny;
-//    Nx = sizeof(p)/sizeof(p[0]) - 1;
-//    Ny = sizeof(p[0])/sizeof(p[0][0]) - 1;
-//    printf("%d %d \n",Nx,Ny);
-//}
+
 
 int main(void)
 {
@@ -56,12 +47,14 @@ int main(void)
     int Nx, Ny;
     
     double u[ROW][COL] = {0};
+    double u_anal[ROW][COL] = {0};
     double Lx = 1.0, Ly = 1.0;
     double dx, dy, tol, omega;
     
     //--------------------
     //   Initial setting 
     //--------------------
+    
     Nx = sizeof(u)/sizeof(u[0]) - 1;
     Ny = sizeof(u[0])/sizeof(u[0][0]) - 1;
 
@@ -70,15 +63,24 @@ int main(void)
 
     tol = 1e-6;
     omega = 1.0;
-    file_name = "data.plt";
+    
+    
 //    initialization(u);
     Jacobi(u,dx,dy,tol);
     printf("\n");
     printf("Nx : %d, Ny : %d, dx : %f, dy : %f \n",Nx,Ny,dx,dy);
     printf("Tolerance : %f, Omega : %f \n",tol, omega);
-
+    
+    //---------------------------
+    //     Writing variables
+    //---------------------------
+    
+    file_name = "Jacobi_result.plt";
     write_u(file_name,u,dx,dy);
 
+    file_name = "Analytic_solution.plt";
+    func_anal(u_anal,ROW,COL,dx,dy);
+    write_u(file_name,u_anal,dx,dy);
     return 0;
 }
 
@@ -94,6 +96,7 @@ void write_u(char *file_nm, double(*p)[COL],double dx, double dy)
 {
     FILE* stream;
     int i,j;
+    
     stream=fopen(file_nm,"w");
     fprintf(stream,"ZONE I=%d J=%d \n",ROW,COL);
     for (i=0;i<ROW;i++){
@@ -107,3 +110,12 @@ double func(int i, int j, double dx, double dy)
 {
     return sin(pi*i*dx)*cos(pi*j*dy);
 }
+
+void func_anal(double(*p)[COL], int row_num, int col_num, double dx, double dy)
+{
+    int i,j;
+    for (i=0;i<row_num;i++){
+        for (j=0;j<col_num;j++){
+            p[i][j] = -1/(2*pow(pi,2))*sin(pi*i*dx)*cos(pi*j*dy); }}
+}
+
