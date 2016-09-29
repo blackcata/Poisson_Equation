@@ -38,7 +38,7 @@
 //#define itmax 1000000
 void Jacobi(double(*p)[COL],double dx, double dy, double tol);
 void initialization(double(*p)[COL]);
-void write_u(double(*p)[COL],double dx, double dy);
+void write_u(char *file_nm, double(*p)[COL],double dx, double dy);
 double func(int i, int j, double dx, double dy);
             
 //void test(double(*p)[COL])
@@ -51,7 +51,7 @@ double func(int i, int j, double dx, double dy);
 
 int main(void)
 {
-    
+    char *file_name ;
     int i,j,k;
     int Nx, Ny;
     
@@ -70,15 +70,14 @@ int main(void)
 
     tol = 1e-6;
     omega = 1.0;
-
+    file_name = "data.plt";
 //    initialization(u);
     Jacobi(u,dx,dy,tol);
-
     printf("\n");
     printf("Nx : %d, Ny : %d, dx : %f, dy : %f \n",Nx,Ny,dx,dy);
     printf("Tolerance : %f, Omega : %f \n",tol, omega);
-    
-    write_u(u,dx,dy);
+
+    write_u(file_name,u,dx,dy);
 
     return 0;
 }
@@ -91,11 +90,11 @@ void initialization(double(*p)[COL])
             p[i][j] = 100*i+j; }}
 }
 
-void write_u(double(*p)[COL],double dx, double dy)
+void write_u(char *file_nm, double(*p)[COL],double dx, double dy)
 {
     FILE* stream;
     int i,j;
-    stream=fopen("data.plt","w");
+    stream=fopen(file_nm,"w");
     fprintf(stream,"ZONE I=%d J=%d \n",ROW,COL);
     for (i=0;i<ROW;i++){
         for(j=0;j<COL;j++){
