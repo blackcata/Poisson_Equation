@@ -31,6 +31,7 @@
 
 #include <stdio.h>
 #include <math.h>
+#include <string.h>
 #include "def.h"
 
 void Jacobi(double(*p)[COL],double dx, double dy, double tol);
@@ -46,6 +47,8 @@ double func(int i, int j, double dx, double dy);
 
 int main(void)
 {
+    char file_path[50];
+    char *dir_name ;
     char *file_name ;
     int i,j,k;
     int Nx, Ny;
@@ -59,6 +62,7 @@ int main(void)
     //   Initial setting 
     //--------------------
     
+    dir_name = "./RESULT/";
     Nx = sizeof(u)/sizeof(u[0]) - 1;
     Ny = sizeof(u[0])/sizeof(u[0][0]) - 1;
 
@@ -79,7 +83,8 @@ int main(void)
     Jacobi(u,dx,dy,tol);
     
     file_name = "Jacobi_result.plt";
-    write_u(file_name,u,dx,dy);
+    sprintf(file_path,"%s%s",dir_name,file_name);
+    write_u(file_path,u,dx,dy);
     
     //---------------------------
     //     SOR Method
@@ -88,14 +93,16 @@ int main(void)
     SOR(u,dx,dy,tol,omega);
     
     file_name = "SOR_result.plt";
-    write_u(file_name,u,dx,dy);
+    sprintf(file_path,"%s%s",dir_name,file_name);
+    write_u(file_path,u,dx,dy);
     
     //---------------------------
     //     Analytic Solutions
     //---------------------------
     file_name = "Analytic_solution.plt";
     func_anal(u_anal,ROW,COL,dx,dy);
-    write_u(file_name,u,dx,dy);
+    sprintf(file_path,"%s%s",dir_name,file_name);
+    write_u(file_path,u_anal,dx,dy);
     
     return 0;
 }
