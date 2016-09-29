@@ -1,6 +1,6 @@
 IC=icc
 TARGET= Poisson_Equation
-OBJECT= Poisson_Equation.o Jacobi.c SOR.c
+OBJECT= Poisson_Equation.o Jacobi.o SOR.o
 
 all : $(TARGET)
 $(TARGET) : $(OBJECT)
