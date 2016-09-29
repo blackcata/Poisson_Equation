@@ -36,7 +36,7 @@
 //#define COL 11
 //#define pi 3.141592
 //#define itmax 1000000
-
+void Jacobi(double(*p)[COL],double dx, double dy, double tol);
 void initialization(double(*p)[COL]);
 void write_u(double(*p)[COL],double dx, double dy);
 double func(int i, int j, double dx, double dy);
@@ -48,73 +48,10 @@ double func(int i, int j, double dx, double dy);
 //    Ny = sizeof(p[0])/sizeof(p[0][0]) - 1;
 //    printf("%d %d \n",Nx,Ny);
 //}
-void Jacobi(double p[][COL],double dx, double dy, double tol)
-{
-    int i,j,k,it;
-    int Nx,Ny;
-    double beta,rms;
-    double SUM1,SUM2;
-    double p_new[ROW][COL]={0};
-    printf(" %d %d \n",COL,ROW);
-    
-    beta = dx/dy;
-    
-    for (it=1;it<itmax;it++){
-        SUM1 = 0;
-        SUM2 = 0;
-        
-        for (i=1;i<ROW-1;i++){
-            for (j=1;j<COL-1;j++){
-                p_new[i][j] =  (p[i+1][j]+p[i-1][j]
-                                + pow(beta,2) *(p[i][j+1]+p[i][j-1])
-                                - dx*dx*func(i,j,dx,dy))/(2*(1+pow(beta,2)));
-                
-//                printf(" %d %d %f \n",i,j,p_new[i][j]);
-            }
-        }
-        
-        //------------------------
-        //  Boundary conoditions
-        //------------------------
-        for (j=0;j<COL;j++){
-            p_new[0][j] = 0;
-            p_new[ROW-1][j] = 0;
-        }
-        
-        for (i=0;i<ROW;i++) {
-            p_new[i][0] = p_new[i][1];
-            p_new[i][COL-1] = p_new[i][COL-2];
-        }
-        
-        //------------------------
-        //  Convergence Criteria
-        //------------------------
-        for (i=1;i<ROW-1;i++){
-            for (j=1;j<COL-1;j++){
-                SUM1 += fabs(p_new[i][j]);
-                SUM2 += fabs(p_new[i+1][j] + p_new[i-1][j]
-                             + pow(beta,2)*(p_new[i][j+1] + p_new[i][j-1])
-                             - (2+2*pow(beta,2))*p_new[i][j]-dx*dx*func(i,j,dx,dy));
-            }
-        }
-        
-        if ( SUM2/SUM1 < tol )
-            break;
-        
-        //------------------------
-        //         Update
-        //------------------------
-        for (i=0;i<ROW;i++){
-            for (j=0;j<COL;j++){
-                p[i][j] = p_new[i][j];}}
-        
-        printf("Iteration : %d, SUM1 : %f, SUM2 : %f, Ratio : %f \n",it,SUM1,SUM2,SUM2/SUM1);
-    }
-}
 
 int main(void)
 {
-  
+    
     int i,j,k;
     int Nx, Ny;
     
@@ -134,7 +71,7 @@ int main(void)
     tol = 1e-6;
     omega = 1.0;
 
-    initialization(u);
+//    initialization(u);
     Jacobi(u,dx,dy,tol);
 
     printf("\n");
@@ -146,13 +83,12 @@ int main(void)
     return 0;
 }
 
-
 void initialization(double(*p)[COL])
 {
     int i,j;
     for (i=0;i<ROW;i++){
         for (j=0;j<COL;j++){
-            p[i][j] = 0; }}
+            p[i][j] = 100*i+j; }}
 }
 
 void write_u(double(*p)[COL],double dx, double dy)
