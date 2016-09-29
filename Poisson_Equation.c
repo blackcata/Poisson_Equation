@@ -30,6 +30,7 @@
 
 
 #include <stdio.h>
+#include <math.h>
 #include "def.h"
 
 void Jacobi(double(*p)[COL],double dx, double dy, double tol);
