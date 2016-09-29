@@ -30,43 +30,46 @@
 
 
 #include <stdio.h>
-#define ROW 21
-#define COL 21
-#define pi 3.141592
-#define itmax 100000
-//
-//void initialization(double(*p)[COL])
+#include "def.h"
+
+//#define ROW 11
+//#define COL 11
+//#define pi 3.141592
+//#define itmax 1000000
+
+void initialization(double(*p)[COL]);
+void write_u(double(*p)[COL],double dx, double dy);
+double func(int i, int j, double dx, double dy);
+            
+//void test(double(*p)[COL])
 //{
-//    int i,j;
-//    for (i=0;i<ROW;i++){
-//        for (j=0;j<COL;j++){
-//            p[i][j] = 0; }}
+//    int Nx,Ny;
+//    Nx = sizeof(p)/sizeof(p[0]) - 1;
+//    Ny = sizeof(p[0])/sizeof(p[0][0]) - 1;
+//    printf("%d %d \n",Nx,Ny);
 //}
-
-double func(int i, int j, double dx, double dy)
-{
-    return sin(pi*i*dx)*cos(pi*j*dy);
-}
-
-void Jacobi(double(*p)[COL],double dx, double dy, double tol)
+void Jacobi(double p[][COL],double dx, double dy, double tol)
 {
     int i,j,k,it;
-    int Nx,Ny;    
+    int Nx,Ny;
     double beta,rms;
     double SUM1,SUM2;
-    double p_new[ROW][COL]={};
-
+    double p_new[ROW][COL]={0};
+    printf(" %d %d \n",COL,ROW);
+    
     beta = dx/dy;
-
+    
     for (it=1;it<itmax;it++){
         SUM1 = 0;
         SUM2 = 0;
         
         for (i=1;i<ROW-1;i++){
             for (j=1;j<COL-1;j++){
-            p_new[i][j] =  (p[i+1][j]+p[i-1][j]
-                            + pow(beta,2) *(p[i][j+1]+p[i][j-1])
-                            - dx*dx*func(i,j,dx,dy))/(2*(1+pow(beta,2)));
+                p_new[i][j] =  (p[i+1][j]+p[i-1][j]
+                                + pow(beta,2) *(p[i][j+1]+p[i][j-1])
+                                - dx*dx*func(i,j,dx,dy))/(2*(1+pow(beta,2)));
+                
+//                printf(" %d %d %f \n",i,j,p_new[i][j]);
             }
         }
         
@@ -82,14 +85,14 @@ void Jacobi(double(*p)[COL],double dx, double dy, double tol)
             p_new[i][0] = p_new[i][1];
             p_new[i][COL-1] = p_new[i][COL-2];
         }
-
+        
         //------------------------
         //  Convergence Criteria
         //------------------------
         for (i=1;i<ROW-1;i++){
             for (j=1;j<COL-1;j++){
                 SUM1 += fabs(p_new[i][j]);
-                SUM2 += fabs(p_new[i+1][j] + p_new[i-1][j] 
+                SUM2 += fabs(p_new[i+1][j] + p_new[i-1][j]
                              + pow(beta,2)*(p_new[i][j+1] + p_new[i][j-1])
                              - (2+2*pow(beta,2))*p_new[i][j]-dx*dx*func(i,j,dx,dy));
             }
@@ -104,21 +107,9 @@ void Jacobi(double(*p)[COL],double dx, double dy, double tol)
         for (i=0;i<ROW;i++){
             for (j=0;j<COL;j++){
                 p[i][j] = p_new[i][j];}}
-         
+        
         printf("Iteration : %d, SUM1 : %f, SUM2 : %f, Ratio : %f \n",it,SUM1,SUM2,SUM2/SUM1);
     }
-}
-
-void write_u(double(*p)[COL],double dx, double dy)
-{
-    FILE* stream;
-    int i,j;
-    stream=fopen("data.plt","w");
-    fprintf(stream,"ZONE I=%d J=%d \n",ROW,COL);
-    for (i=0;i<ROW;i++){
-        for(j=0;j<COL;j++){
-            fprintf(stream,"%f %f %f \n",i*dx,j*dy,p[i][j]); }}
-    fclose(stream);
 }
 
 int main(void)
@@ -127,7 +118,7 @@ int main(void)
     int i,j,k;
     int Nx, Ny;
     
-    double u[ROW][COL];
+    double u[ROW][COL] = {0};
     double Lx = 1.0, Ly = 1.0;
     double dx, dy, tol, omega;
     
@@ -142,8 +133,8 @@ int main(void)
 
     tol = 1e-6;
     omega = 1.0;
-//
-//    initialization(u);
+
+    initialization(u);
     Jacobi(u,dx,dy,tol);
 
     printf("\n");
@@ -156,3 +147,28 @@ int main(void)
 }
 
 
+void initialization(double(*p)[COL])
+{
+    int i,j;
+    for (i=0;i<ROW;i++){
+        for (j=0;j<COL;j++){
+            p[i][j] = 0; }}
+}
+
+void write_u(double(*p)[COL],double dx, double dy)
+{
+    FILE* stream;
+    int i,j;
+    stream=fopen("data.plt","w");
+    fprintf(stream,"ZONE I=%d J=%d \n",ROW,COL);
+    for (i=0;i<ROW;i++){
+        for(j=0;j<COL;j++){
+            fprintf(stream,"%f %f %f \n",i*dx,j*dy,p[i][j]); }}
+    fclose(stream);
+}
+
+
+double func(int i, int j, double dx, double dy)
+{
+    return sin(pi*i*dx)*cos(pi*j*dy);
+}
