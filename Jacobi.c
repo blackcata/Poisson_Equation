@@ -1,5 +1,7 @@
 #include <stdio.h>
+#include <math.h>
 #include "def.h"
+
 double func(int i, int j, double dx, double dy);
 
 void Jacobi(double(*p)[COL],double dx, double dy, double tol)
