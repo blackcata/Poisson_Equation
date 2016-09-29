@@ -39,7 +39,7 @@ void SOR(double(*p)[COL],double dx, double dy, double tol, double omega);
 
 void print_u_array(double (*p)[COL]);
 void initialization(double (*p)[COL]);
-void write_u(char *file_nm, double(*p)[COL],double dx, double dy);
+void write_u(char *dir_nm,char *file_nm, double(*p)[COL],double dx, double dy);
 void func_anal(double(*p)[COL], int row_num, int col_num, double dx, double dy);
 
 double func(int i, int j, double dx, double dy);
@@ -47,7 +47,6 @@ double func(int i, int j, double dx, double dy);
 
 int main(void)
 {
-    char file_path[50];
     char *dir_name ;
     char *file_name ;
     int i,j,k;
@@ -83,8 +82,7 @@ int main(void)
     Jacobi(u,dx,dy,tol);
     
     file_name = "Jacobi_result.plt";
-    sprintf(file_path,"%s%s",dir_name,file_name);
-    write_u(file_path,u,dx,dy);
+    write_u(dir_name,file_name,u,dx,dy);
     
     //---------------------------
     //     SOR Method
@@ -93,16 +91,14 @@ int main(void)
     SOR(u,dx,dy,tol,omega);
     
     file_name = "SOR_result.plt";
-    sprintf(file_path,"%s%s",dir_name,file_name);
-    write_u(file_path,u,dx,dy);
+    write_u(dir_name,file_name,u,dx,dy);
     
     //---------------------------
     //     Analytic Solutions
     //---------------------------
     file_name = "Analytic_solution.plt";
     func_anal(u_anal,ROW,COL,dx,dy);
-    sprintf(file_path,"%s%s",dir_name,file_name);
-    write_u(file_path,u_anal,dx,dy);
+    write_u(dir_name,file_name,u_anal,dx,dy);
     
     return 0;
 }
@@ -125,12 +121,14 @@ void initialization(double (*p)[COL])
 
 }
 
-void write_u(char *file_nm, double(*p)[COL],double dx, double dy)
+void write_u(char *dir_nm,char *file_nm, double(*p)[COL],double dx, double dy)
 {
     FILE* stream;
     int i,j;
+    char file_path[50];
+    sprintf(file_path,"%s%s",dir_nm,file_nm);
     
-    stream=fopen(file_nm,"w");
+    stream=fopen(file_path,"w");
     fprintf(stream,"ZONE I=%d J=%d \n",ROW,COL);
     for (i=0;i<ROW;i++){
         for(j=0;j<COL;j++){
