@@ -65,7 +65,6 @@ int main(void)
     tol = 1e-6;
     omega = 1.0;
     
-    
 //    initialization(u);
     Jacobi(u,dx,dy,tol);
     printf("\n");
@@ -78,10 +77,9 @@ int main(void)
     
     file_name = "Jacobi_result.plt";
     write_u(file_name,u,dx,dy);
-
-    file_name = "Analytic_solution.plt";
     func_anal(u_anal,ROW,COL,dx,dy);
     write_u(file_name,u_anal,dx,dy);
+
     return 0;
 }
 
@@ -100,9 +98,11 @@ void write_u(char *file_nm, double(*p)[COL],double dx, double dy)
     
     stream=fopen(file_nm,"w");
     fprintf(stream,"ZONE I=%d J=%d \n",ROW,COL);
-    for (i=0;i<ROW;i++){
-        for(j=0;j<COL;j++){
-            fprintf(stream,"%f %f %f \n",i*dx,j*dy,p[i][j]); }}
+    for (i=0;i<ROW;i++) {
+        for(j=0;j<COL;j++) {
+            fprintf(stream,"%f %f %f \n",i*dx,j*dy,p[i][j]); 
+        }
+    }
     fclose(stream);
 }
 
@@ -117,6 +117,9 @@ void func_anal(double(*p)[COL], int row_num, int col_num, double dx, double dy)
     int i,j;
     for (i=0;i<row_num;i++){
         for (j=0;j<col_num;j++){
-            p[i][j] = -1/(2*pow(pi,2))*sin(pi*i*dx)*cos(pi*j*dy); }}
+            p[i][j] = -1/(2*pow(pi,2))*sin(pi*i*dx)*cos(pi*j*dy);
+        }
+    }
 }
+
 
