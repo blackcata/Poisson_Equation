@@ -6,7 +6,6 @@ double func(int i, int j, double dx, double dy);
 void SOR(double(*p)[COL],double dx, double dy, double tol, double omega)
 {
     int i,j,k,it;
-    int Nx,Ny;
     double beta,rms;
     double SUM1,SUM2;
     double p_new[ROW][COL]={0};

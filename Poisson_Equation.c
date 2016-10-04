@@ -34,14 +34,24 @@
 #include <string.h>
 #include "def.h"
 
+//-----------------------------------
+// Poisson Solvers - Jacobi, SOR, CG
+//-----------------------------------
 void Jacobi(double(*p)[COL],double dx, double dy, double tol);
 void SOR(double(*p)[COL],double dx, double dy, double tol, double omega);
+void Conjugate_Gradient(double(*p)[COL],double dx, double dy, double tol);
 
+//-----------------------------------
+// Productivity tools
+//-----------------------------------
 void print_u_array(double (*p)[COL]);
 void initialization(double (*p)[COL]);
 void write_u(char *dir_nm,char *file_nm, double(*p)[COL],double dx, double dy);
-void func_anal(double(*p)[COL], int row_num, int col_num, double dx, double dy);
 
+//-----------------------------------
+// Mathematical tools
+//-----------------------------------
+void func_anal(double(*p)[COL], int row_num, int col_num, double dx, double dy);
 double func(int i, int j, double dx, double dy);
 
 
@@ -75,27 +85,36 @@ int main(void)
     printf("Nx : %d, Ny : %d, dx : %f, dy : %f \n",Nx,Ny,dx,dy);
     printf("Tolerance : %f, Omega : %f \n",tol, omega);
     
-    //---------------------------
-    //     Jacobi Method
-    //---------------------------
+    //-----------------------------
+    //        Jacobi Method
+    //-----------------------------
     initialization(u);
     Jacobi(u,dx,dy,tol);
     
     file_name = "Jacobi_result.plt";
     write_u(dir_name,file_name,u,dx,dy);
     
-    //---------------------------
-    //     SOR Method
-    //---------------------------
+    //-----------------------------
+    //         SOR Method
+    //-----------------------------
     initialization(u);
     SOR(u,dx,dy,tol,omega);
     
     file_name = "SOR_result.plt";
     write_u(dir_name,file_name,u,dx,dy);
+
+    //-----------------------------
+    //  Conjugate Gradient Method
+    //-----------------------------
+    initialization(u);
+    Conjugate_Gradient(u,dx,dy,tol);
     
-    //---------------------------
-    //     Analytic Solutions
-    //---------------------------
+    file_name = "CG_result.plt";
+    write_u(dir_name,file_name,u,dx,dy);
+    
+    //-----------------------------
+    //      Analytic Solutions
+    //-----------------------------
     file_name = "Analytic_solution.plt";
     func_anal(u_anal,ROW,COL,dx,dy);
     write_u(dir_name,file_name,u_anal,dx,dy);
