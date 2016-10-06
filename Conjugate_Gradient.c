@@ -8,9 +8,9 @@
 //-----------------------------------
 double norm_L2(double *a);
 double vvdot(double *a, double *b);
-void vmdot(double (*A)[ROW*COL],double *x,double *b);
+void vmdot(double **A,double *x,double *b);
 
-void make_Abx(double (*A)[ROW*COL], double *b, double *x, double(*u)[COL]
+void make_Abx(double **A, double *b, double *x, double**u
               ,double dx, double dy);
 
 //-----------------------------------
@@ -23,7 +23,7 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol)
     int i,j,k,it;
     double alpha,beta ;
 
-    double A[ROW*COL][ROW*COL] = {0};
+    double **A;
     double tmp[ROW*COL] = {0};
 
     double x[ROW*COL] = {0};
@@ -32,52 +32,57 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol)
     double r[ROW*COL] = {0};
     double r_new[ROW*COL] = {0};
 
-//
-//    make_Abx(A,b,x,p,dx,dy);
-//    vmdot(A,x,tmp);
+    A = (double **) malloc(ROW*COL * sizeof(double));
+    for (i=0;i<ROW*COL;i++)
+    {
+      A[i] = (double *) malloc(ROW*COL * sizeof(double));
+    }
 
-//    for (i=0;i<ROW;i++){
-//        for (j=0;j<COL;j++){
-//            r[COL*i+j] = b[COL*i+j] - tmp[COL*i+j];
-//            z[COL*i+j] = r[COL*i+j];
-//        }
-//    }
-//
-//    for (it=1;it<itmax;it++)
-//    {
-//        vmdot(A,z,tmp);
-//        alpha = vvdot(r,r)/vvdot(z,tmp);
-//
-//        for (i=0;i<ROW;i++){
-//            for (j=0;j<COL;j++){
-//                x[COL*i+j] = x[COL*i+j] + alpha * z[COL*i+j];
-//            }
-//        }
-//
-//        vmdot(A,z,tmp);
-//
-//        for (i=0;i<ROW;i++){
-//            for (j=0;j<COL;j++){
-//                r_new[COL*i+j] = r[COL*i+j] - alpha*tmp[COL*i+j];
-//            }
-//        }
-//
-//        if (norm_L2(r_new) < tol )
-//            break;
-//
-//        beta = vvdot(r_new,r_new)/vvdot(r,r);
-//        for (i=0;i<ROW;i++){
-//            for (j=0;j<COL;j++){
-//                z[COL*i+j] = r_new[COL*i+j] + beta*z[COL*i+j];
-//                r[COL*i+j] = r_new[COL*i+j];
-//            }
-//        }
-//    }
+    make_Abx(A,b,x,p,dx,dy);
+    vmdot(A,x,tmp);
+
+   for (i=0;i<ROW;i++){
+       for (j=0;j<COL;j++){
+           r[COL*i+j] = b[COL*i+j] - tmp[COL*i+j];
+           z[COL*i+j] = r[COL*i+j];
+       }
+   }
+
+   for (it=1;it<itmax;it++)
+   {
+       vmdot(A,z,tmp);
+       alpha = vvdot(r,r)/vvdot(z,tmp);
+
+       for (i=0;i<ROW;i++){
+           for (j=0;j<COL;j++){
+               x[COL*i+j] = x[COL*i+j] + alpha * z[COL*i+j];
+           }
+       }
+
+       vmdot(A,z,tmp);
+
+       for (i=0;i<ROW;i++){
+           for (j=0;j<COL;j++){
+               r_new[COL*i+j] = r[COL*i+j] - alpha*tmp[COL*i+j];
+           }
+       }
+
+       if (norm_L2(r_new) < tol )
+           break;
+
+       beta = vvdot(r_new,r_new)/vvdot(r,r);
+       for (i=0;i<ROW;i++){
+           for (j=0;j<COL;j++){
+               z[COL*i+j] = r_new[COL*i+j] + beta*z[COL*i+j];
+               r[COL*i+j] = r_new[COL*i+j];
+           }
+       }
+   }
 
 }
 
-void make_Abx(double (*A)[ROW*COL],double *b,double *x,
-              double (*u)[COL],double dx, double dy)
+void make_Abx(double **A,double *b,double *x,
+              double **u,double dx, double dy)
 {
     int i,j,k,l;
     //--------------------------------
@@ -91,7 +96,7 @@ void make_Abx(double (*A)[ROW*COL],double *b,double *x,
                         A[COL*k+i][ROW*l+i]   = -4;
                         A[COL*k+i+1][ROW*l+i] = 1;
                     }
-                    else if (i == ROW){
+                    else if (i == ROW-1){
                         A[COL*k+i][ROW*l+i]   = -4;
                         A[COL*k+i-1][ROW*l+i] = 1;
                     }
@@ -115,7 +120,6 @@ void make_Abx(double (*A)[ROW*COL],double *b,double *x,
                     }
                 }
             }
-
         }
     }
 
@@ -152,7 +156,7 @@ double norm_L2(double *a)
     return sqrt(sum);
 }
 
-void vmdot(double (*A)[ROW*COL],double *x,double *b)
+void vmdot(double **A,double *x,double *b)
 {
     int i,j;
 
