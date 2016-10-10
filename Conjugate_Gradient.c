@@ -56,24 +56,19 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol)
        vmdot(A,z,tmp);
        alpha = vvdot(r,z)/vvdot(z,tmp);
 
+
        for (i=0;i<ROW;i++){
            for (j=0;j<COL;j++){
                x[COL*i+j] = x[COL*i+j] + alpha * z[COL*i+j];
-           }
-       }
-
-       vmdot(A,z,tmp);
-
-       for (i=0;i<ROW;i++){
-           for (j=0;j<COL;j++){
                r_new[COL*i+j] = r[COL*i+j] - alpha*tmp[COL*i+j];
            }
        }
-      //  printf("iteration : %d, tol : %f, value : %f\n",it,tol,norm_L2(r_new) );
+
+       printf("iteration : %d, tol : %f, value : %f\n",it,tol,norm_L2(r_new) );
        if (norm_L2(r_new) < tol )
            break;
 
-       beta = vvdot(r_new,r)/vvdot(r,r);
+       beta = vvdot(r_new,r_new)/vvdot(r,r);
        for (i=0;i<ROW;i++){
            for (j=0;j<COL;j++){
                z[COL*i+j] = r_new[COL*i+j] + beta*z[COL*i+j];
@@ -148,15 +143,6 @@ void make_Abx(double **A,double *b,double *x,
                     }
                 }
             }
-            printf("i: %d, j: %d \n",k,l);
-            for (j=0;j<ROW;j++){
-                printf("%d ",j);
-                for (i=0;i<COL;i++){
-                    printf("%f ",A[COL*k+i][ROW*l+j]);
-                }
-                printf("\n");
-            }
-            printf("\n");
         }
     }
 
@@ -171,7 +157,6 @@ void make_Abx(double **A,double *b,double *x,
     //--------------------------------
     //        Make Vector b
     //--------------------------------
-    printf("Vector b \n");
     for (i=0;i<ROW;i++){
         for (j=0;j<COL;j++){
           if (i==0 || i==ROW-1)
@@ -180,10 +165,8 @@ void make_Abx(double **A,double *b,double *x,
             if (j==0 || j==COL-1)
               b[ROW*i+j] = 0;
             else
-              b[ROW*i+j] = func(i,j,dx,dy);
+              b[ROW*i+j] = dx*dx*func(i,j,dx,dy);
           }
-
-          printf("i : %d, j : %d, value : %f \n",i,j,b[COL*i+j]);
         }
     }
 }

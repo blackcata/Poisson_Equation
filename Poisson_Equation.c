@@ -91,23 +91,23 @@ int main(void)
     printf("Nx : %d, Ny : %d, dx : %f, dy : %f \n",ROW,COL,dx,dy);
     printf("Tolerance : %f, Omega : %f \n",tol, omega);
 
-  //  //-----------------------------
-  //  //        Jacobi Method
-  //  //-----------------------------
-  //  initialization(u);
-  //  Jacobi(u,dx,dy,tol);
-   //
-  //  file_name = "Jacobi_result.plt";
-  //  write_u(dir_name,file_name,u,dx,dy);
-   //
-  //  //-----------------------------
-  //  //         SOR Method
-  //  //-----------------------------
-  //  initialization(u);
-  //  SOR(u,dx,dy,tol,omega);
-   //
-  //  file_name = "SOR_result.plt";
-  //  write_u(dir_name,file_name,u,dx,dy);
+   //-----------------------------
+   //        Jacobi Method
+   //-----------------------------
+   initialization(u);
+   Jacobi(u,dx,dy,tol);
+
+   file_name = "Jacobi_result.plt";
+   write_u(dir_name,file_name,u,dx,dy);
+
+   //-----------------------------
+   //         SOR Method
+   //-----------------------------
+   initialization(u);
+   SOR(u,dx,dy,tol,omega);
+
+   file_name = "SOR_result.plt";
+   write_u(dir_name,file_name,u,dx,dy);
 
    //-----------------------------
    //  Conjugate Gradient Method
