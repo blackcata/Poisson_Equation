@@ -1,4 +1,4 @@
-#define ROW 11
-#define COL 11
+#define ROW 31
+#define COL 31
 #define pi 3.141592
-#define itmax 100000
+#define itmax 1000
