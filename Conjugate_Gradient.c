@@ -48,10 +48,13 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol)
        }
    }
 
-   for (it=1;it<itmax;it++)
+   //---------------------------------------
+   //   Main Loop of Conjugate_Gradient
+   //---------------------------------------
+   for (it=0;it<itmax;it++)
    {
        vmdot(A,z,tmp);
-       alpha = vvdot(r,r)/vvdot(z,tmp);
+       alpha = vvdot(r,z)/vvdot(z,tmp);
 
        for (i=0;i<ROW;i++){
            for (j=0;j<COL;j++){
@@ -66,11 +69,11 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol)
                r_new[COL*i+j] = r[COL*i+j] - alpha*tmp[COL*i+j];
            }
        }
-
+      //  printf("iteration : %d, tol : %f, value : %f\n",it,tol,norm_L2(r_new) );
        if (norm_L2(r_new) < tol )
            break;
 
-       beta = vvdot(r_new,r_new)/vvdot(r,r);
+       beta = vvdot(r_new,r)/vvdot(r,r);
        for (i=0;i<ROW;i++){
            for (j=0;j<COL;j++){
                z[COL*i+j] = r_new[COL*i+j] + beta*z[COL*i+j];
@@ -79,8 +82,23 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol)
        }
    }
 
+   //---------------------------------------
+   //   Redistribute x vector to array
+   //---------------------------------------
+   for (i=0;i<ROW;i++)
+   {
+     for (j=0;j<COL;j++)
+     {
+       p[i][j] = x[COL*i+j];
+     }
+   }
+
+
 }
 
+//------------------------------------------------------------
+//             Make Stiffness matrix of CG method
+//------------------------------------------------------------
 void make_Abx(double **A,double *b,double *x,
               double **u,double dx, double dy)
 {
@@ -88,28 +106,38 @@ void make_Abx(double **A,double *b,double *x,
     //--------------------------------
     //         Make Matrix A
     //--------------------------------
-    for (k=1;k<ROW;k++){
-        for (l=1;l<COL;l++){
+    for (k=0;k<ROW;k++){
+        for (l=0;l<COL;l++){
             if (k==l){
-                for (i=0;i<ROW;i++){
-                    if (i == 0){
-                        A[COL*k+i][ROW*l+i]   = -4;
-                        A[COL*k+i+1][ROW*l+i] = 1;
-                    }
-                    else if (i == ROW-1){
-                        A[COL*k+i][ROW*l+i]   = -4;
-                        A[COL*k+i-1][ROW*l+i] = 1;
-                    }
-                    else {
-                        A[COL*k+i][ROW*l+i]   = -4;
-                        A[COL*k+i-1][ROW*l+i] = 1;
-                        A[COL*k+i+1][ROW*l+i] = 1;
-                    }
-
+                if (k==0 || k==ROW-1){
+                  for (i=0;i<ROW;i++){
+                      A[COL*k+i][ROW*l+i]   = 1;
+                  }
+                }
+                else{
+                  for (i=0;i<ROW;i++){
+                      if (i == 0){
+                          A[COL*k+i][ROW*l+i]   = -1;
+                          A[COL*k+i+1][ROW*l+i] = 1;
+                      }
+                      else if (i == ROW-1){
+                          A[COL*k+i][ROW*l+i]   = -1;
+                          A[COL*k+i-1][ROW*l+i] = 1;
+                      }
+                      else {
+                          A[COL*k+i][ROW*l+i]   = -4;
+                          A[COL*k+i-1][ROW*l+i] = 1;
+                          A[COL*k+i+1][ROW*l+i] = 1;
+                      }
+                  }
                 }
             }
+
             else if ( abs(k-l) == 1 ){
                 for (i=0;i<ROW;i++){
+                  if (i==0 || i==ROW-1)
+                    A[COL*k+i][ROW*l+i] = 0;
+                  else
                     A[COL*k+i][ROW*l+i] = 1;
                 }
             }
@@ -120,9 +148,17 @@ void make_Abx(double **A,double *b,double *x,
                     }
                 }
             }
+            printf("i: %d, j: %d \n",k,l);
+            for (j=0;j<ROW;j++){
+                printf("%d ",j);
+                for (i=0;i<COL;i++){
+                    printf("%f ",A[COL*k+i][ROW*l+j]);
+                }
+                printf("\n");
+            }
+            printf("\n");
         }
     }
-
 
     //--------------------------------
     //         Make Vector x
@@ -135,9 +171,19 @@ void make_Abx(double **A,double *b,double *x,
     //--------------------------------
     //        Make Vector b
     //--------------------------------
+    printf("Vector b \n");
     for (i=0;i<ROW;i++){
         for (j=0;j<COL;j++){
-            b[ROW*i+j] = func(i,j,dx,dy);
+          if (i==0 || i==ROW-1)
+            b[ROW*i+j] = 0;
+          else{
+            if (j==0 || j==COL-1)
+              b[ROW*i+j] = 0;
+            else
+              b[ROW*i+j] = func(i,j,dx,dy);
+          }
+
+          printf("i : %d, j : %d, value : %f \n",i,j,b[COL*i+j]);
         }
     }
 }
@@ -182,7 +228,6 @@ double vvdot(double *a, double *b)
 
     for (i=1;i<ROW*COL;i++){
         c = c + a[i]*b[i];
-
     }
 
     return c;
