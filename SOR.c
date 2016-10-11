@@ -30,6 +30,8 @@ void SOR(double **p,double dx, double dy, double tol, double omega, int BC)
         //------------------------
         //  Boundary conditions
         //------------------------
+
+        // Boundary - Case 1
         if (BC == 1){
           for (j=0;j<COL;j++){
               p_new[0][j] = 0;
@@ -41,6 +43,7 @@ void SOR(double **p,double dx, double dy, double tol, double omega, int BC)
               p_new[i][COL-1] = p_new[i][COL-2];
           }
         }
+        // Boundary - Case 2
         else if (BC ==2){
           for (j=0;j<COL;j++){
               p_new[0][j] = -1/(2*pow(pi,2))*func(0,j,dx,dy);
