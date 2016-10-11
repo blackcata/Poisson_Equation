@@ -1,14 +1,19 @@
 #include <stdio.h>
+#include <time.h>
 #include <math.h>
 #include "def.h"
 double func(int i, int j, double dx, double dy);
 
-void SOR(double **p,double dx, double dy, double tol, double omega, int *iter,int BC)
+void SOR(double **p,double dx, double dy, double tol, double omega,
+                               double *tot_time,int *iter,int BC)
 {
     int i,j,k,it;
     double beta,rms;
     double SUM1,SUM2;
     double p_new[ROW][COL]={0};
+    time_t start_t =0, end_t =0;
+
+    start_t = clock();
 
     beta = dx/dy;
 
@@ -69,6 +74,8 @@ void SOR(double **p,double dx, double dy, double tol, double omega, int *iter,in
 
         if ( SUM2/SUM1 < tol ){
             *iter = it;
+            end_t = clock();
+            *tot_time = (double)(end_t - start_t)/(CLOCKS_PER_SEC);
             break;
         }
         // printf("Iteration : %d, SUM1 : %f, SUM2 : %f, Ratio : %f \n",it,SUM1,SUM2,SUM2/SUM1);

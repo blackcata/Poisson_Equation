@@ -1,14 +1,20 @@
 #include <stdio.h>
+#include <math.h>
+#include <time.h>
 #include "def.h"
 double func(int i, int j, double dx, double dy);
 
-void Jacobi(double **p,double dx, double dy, double tol, int *iter,int BC)
+void Jacobi(double **p,double dx, double dy, double tol,
+                       double *tot_time,int *iter,int BC)
 {
     int i,j,k,it;
     int Nx,Ny;
     double beta,rms;
     double SUM1,SUM2;
     double p_new[ROW][COL]={0};
+    time_t start_t =0, end_t =0;
+
+    start_t = clock();
 
     beta = dx/dy;
 
@@ -67,6 +73,8 @@ void Jacobi(double **p,double dx, double dy, double tol, int *iter,int BC)
 
         if ( SUM2/SUM1 < tol ){
             *iter = it;
+            end_t = clock();
+            *tot_time = (double)(end_t - start_t)/(CLOCKS_PER_SEC);
             break;
         }
 

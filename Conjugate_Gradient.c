@@ -1,6 +1,6 @@
 #include <stdio.h>
+#include <time.h>
 #include <math.h>
-#include <string.h>
 #include "def.h"
 
 //-----------------------------------
@@ -18,7 +18,8 @@ void make_Abx(double **A, double *b, double *x, double**u
 //-----------------------------------
 double func(int i, int j, double dx, double dy);
 
-void Conjugate_Gradient(double **p,double dx, double dy, double tol, int *iter, int BC)
+void Conjugate_Gradient(double **p,double dx, double dy, double tol,
+                                   double *tot_time,int *iter, int BC)
 {
     int i,j,k,it;
     double alpha,beta ;
@@ -31,6 +32,9 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol, int *iter, 
     double z[ROW*COL] = {0};
     double r[ROW*COL] = {0};
     double r_new[ROW*COL] = {0};
+    time_t start_t =0, end_t =0;
+
+    start_t = clock();
 
     A = (double **) malloc(ROW*COL * sizeof(double));
     for (i=0;i<ROW*COL;i++)
@@ -69,6 +73,8 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol, int *iter, 
           // printf("iteration : %d, tol : %f, value : %f\n",it,tol,norm_L2(r_new) );
           *iter = it;
           free(A);
+          end_t = clock();
+          *tot_time = (double)(end_t - start_t)/(CLOCKS_PER_SEC);
           break;
        }
 

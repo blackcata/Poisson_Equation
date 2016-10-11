@@ -31,15 +31,19 @@
 
 #include <stdio.h>
 #include <math.h>
+
 #include <string.h>
 #include "def.h"
 
 //-----------------------------------
 // Poisson Solvers - Jacobi, SOR, CG
 //-----------------------------------
-void Jacobi(double **p,double dx, double dy, double tol, int *iter,int BC);
-void SOR(double **p,double dx, double dy, double tol, double omega,int *iter,int BC);
-void Conjugate_Gradient(double **p,double dx, double dy, double tol, int *iter,int BC);
+void Jacobi(double **p,double dx, double dy, double tol,
+                       double *tot_time, int *iter,int BC);
+void SOR(double **p,double dx, double dy, double tol, double omega,
+                               double *tot_time,int *iter,int BC);
+void Conjugate_Gradient(double **p,double dx, double dy, double tol,
+                                   double *tot_time,int *iter,int BC);
 
 //-----------------------------------
 //        Productivity tools
@@ -65,7 +69,7 @@ int main(void)
     double **u;
     double **u_anal;
     double Lx = 1.0, Ly = 1.0;
-    double dx, dy, tol, omega, err;
+    double dx, dy, tol, omega, err, tot_time;
 
 
     u      = (double **) malloc(ROW *sizeof(double));
@@ -80,6 +84,8 @@ int main(void)
     //   Initial setting
     //--------------------
     iter = 0;
+    tot_time = 0;
+
     dir_name = "./RESULT/";
 
     dx = Lx/(ROW-1);
@@ -104,9 +110,9 @@ int main(void)
    //        Jacobi Method
    //-----------------------------
    initialization(u);
-   Jacobi(u,dx,dy,tol,&iter,BC);
+   Jacobi(u,dx,dy,tol,&tot_time,&iter,BC);
    error_rms(u,u_anal,&err);
-   printf("Jacobi Method - Error : %f, Iteration : %d \n",err,iter);
+   printf("Jacobi Method - Error : %f, Iteration : %d, Time : %f s \n",err,iter,tot_time);
 
    file_name = "Jacobi_result.plt";
    write_u(dir_name,file_name,u,dx,dy);
@@ -115,9 +121,9 @@ int main(void)
    //         SOR Method
    //-----------------------------
    initialization(u);
-   SOR(u,dx,dy,tol,omega,&iter,BC);
+   SOR(u,dx,dy,tol,omega,&tot_time,&iter,BC);
    error_rms(u,u_anal,&err);
-   printf("SOR Method - Error : %f, Iteration : %d \n",err,iter);
+   printf("SOR Method - Error : %f, Iteration : %d, Time : %f s \n",err,iter,tot_time);
 
    file_name = "SOR_result.plt";
    write_u(dir_name,file_name,u,dx,dy);
@@ -126,9 +132,9 @@ int main(void)
    //  Conjugate Gradient Method
    //-----------------------------
    initialization(u);
-   Conjugate_Gradient(u,dx,dy,tol,&iter,BC);
+   Conjugate_Gradient(u,dx,dy,tol,&tot_time,&iter,BC);
    error_rms(u,u_anal,&err);
-   printf("CG method - Error : %f, Iteration : %d \n",err,iter);
+   printf("CG method - Error : %f, Iteration : %d, Time : %f s \n",err,iter,tot_time);
 
    file_name = "CG_result.plt";
    write_u(dir_name,file_name,u,dx,dy);
