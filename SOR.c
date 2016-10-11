@@ -3,7 +3,7 @@
 #include "def.h"
 double func(int i, int j, double dx, double dy);
 
-void SOR(double **p,double dx, double dy, double tol, double omega)
+void SOR(double **p,double dx, double dy, double tol, double omega, int BC)
 {
     int i,j,k,it;
     double beta,rms;
@@ -30,14 +30,27 @@ void SOR(double **p,double dx, double dy, double tol, double omega)
         //------------------------
         //  Boundary conditions
         //------------------------
-        for (j=0;j<COL;j++){
-            p_new[0][j] = 0;
-            p_new[ROW-1][j] = 0;
-        }
+        if (BC == 1){
+          for (j=0;j<COL;j++){
+              p_new[0][j] = 0;
+              p_new[ROW-1][j] = 0;
+          }
 
-        for (i=0;i<ROW;i++) {
-            p_new[i][0] = p_new[i][1];
-            p_new[i][COL-1] = p_new[i][COL-2];
+          for (i=0;i<ROW;i++) {
+              p_new[i][0] = p_new[i][1];
+              p_new[i][COL-1] = p_new[i][COL-2];
+          }
+        }
+        else if (BC ==2){
+          for (j=0;j<COL;j++){
+              p_new[0][j] = -1/(2*pow(pi,2))*func(0,j,dx,dy);
+              p_new[ROW-1][j] = -1/(2*pow(pi,2))*func(ROW-1,j,dx,dy);
+          }
+
+          for (i=0;i<ROW;i++) {
+              p_new[i][0] = -1/(2*pow(pi,2))*func(i,0,dx,dy);
+              p_new[i][COL-1] = -1/(2*pow(pi,2))*func(i,COL-1,dx,dy);
+          }
         }
 
         //------------------------

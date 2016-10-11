@@ -37,9 +37,9 @@
 //-----------------------------------
 // Poisson Solvers - Jacobi, SOR, CG
 //-----------------------------------
-void Jacobi(double **p,double dx, double dy, double tol);
-void SOR(double **p,double dx, double dy, double tol, double omega);
-void Conjugate_Gradient(double **p,double dx, double dy, double tol);
+void Jacobi(double **p,double dx, double dy, double tol, int BC);
+void SOR(double **p,double dx, double dy, double tol, double omega,int BC);
+void Conjugate_Gradient(double **p,double dx, double dy, double tol, int BC);
 
 //-----------------------------------
 //        Productivity tools
@@ -60,7 +60,7 @@ int main(void)
     char *dir_name ;
     char *file_name ;
     int i,j,k;
-    int Nx, Ny;
+    int Nx, Ny, BC;
 
     double **u;
     double **u_anal;
@@ -86,34 +86,35 @@ int main(void)
 
     tol = 1e-6;
     omega = 1.8;
+    BC = 1;
 
     printf("\n");
     printf("Nx : %d, Ny : %d, dx : %f, dy : %f \n",ROW,COL,dx,dy);
     printf("Tolerance : %f, Omega : %f \n",tol, omega);
 
-   //-----------------------------
-   //        Jacobi Method
-   //-----------------------------
-   initialization(u);
-   Jacobi(u,dx,dy,tol);
-
-   file_name = "Jacobi_result.plt";
-   write_u(dir_name,file_name,u,dx,dy);
-
-   //-----------------------------
-   //         SOR Method
-   //-----------------------------
-   initialization(u);
-   SOR(u,dx,dy,tol,omega);
-
-   file_name = "SOR_result.plt";
-   write_u(dir_name,file_name,u,dx,dy);
+  //  //-----------------------------
+  //  //        Jacobi Method
+  //  //-----------------------------
+  //  initialization(u);
+  //  Jacobi(u,dx,dy,tol,BC);
+   //
+  //  file_name = "Jacobi_result.plt";
+  //  write_u(dir_name,file_name,u,dx,dy);
+   //
+  //  //-----------------------------
+  //  //         SOR Method
+  //  //-----------------------------
+  //  initialization(u);
+  //  SOR(u,dx,dy,tol,omega,BC);
+   //
+  //  file_name = "SOR_result.plt";
+  //  write_u(dir_name,file_name,u,dx,dy);
 
    //-----------------------------
    //  Conjugate Gradient Method
    //-----------------------------
    initialization(u);
-   Conjugate_Gradient(u,dx,dy,tol);
+   Conjugate_Gradient(u,dx,dy,tol,BC);
 
    file_name = "CG_result.plt";
    write_u(dir_name,file_name,u,dx,dy);
