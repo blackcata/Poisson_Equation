@@ -11,14 +11,14 @@ double vvdot(double *a, double *b);
 void vmdot(double **A,double *x,double *b);
 
 void make_Abx(double **A, double *b, double *x, double**u
-              ,double dx, double dy);
+              ,double dx, double dy, int BC);
 
 //-----------------------------------
 //      Mathematical functions
 //-----------------------------------
 double func(int i, int j, double dx, double dy);
 
-void Conjugate_Gradient(double **p,double dx, double dy, double tol, int *iter, int BC)
+void Conjugate_Gradient(double **p,double dx, double dy, double tol, int BC)
 {
     int i,j,k,it;
     double alpha,beta ;
@@ -38,7 +38,7 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol, int *iter, 
       A[i] = (double *) malloc(ROW*COL * sizeof(double));
     }
 
-    make_Abx(A,b,x,p,dx,dy);
+    make_Abx(A,b,x,p,dx,dy,BC);
     vmdot(A,x,tmp);
 
    for (i=0;i<ROW;i++){
@@ -54,7 +54,7 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol, int *iter, 
    for (it=0;it<itmax;it++)
    {
        vmdot(A,z,tmp);
-       alpha = vvdot(r,r)/vvdot(z,tmp);
+       alpha = vvdot(r,z)/vvdot(z,tmp);
 
 
        for (i=0;i<ROW;i++){
@@ -65,12 +65,9 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol, int *iter, 
        }
 
 
-       if (norm_L2(r_new) < tol ){
-          // printf("iteration : %d, tol : %f, value : %f\n",it,tol,norm_L2(r_new) );
-          *iter = it;
-          free(A);
-          break;
-       }
+       if (norm_L2(r_new) < tol )
+           printf("iteration : %d, tol : %f, value : %f\n",it,tol,norm_L2(r_new));
+           break;
 
        beta = vvdot(r_new,r_new)/vvdot(r,r);
        for (i=0;i<ROW;i++){
@@ -99,7 +96,7 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol, int *iter, 
 //             Make Stiffness matrix of CG method
 //------------------------------------------------------------
 void make_Abx(double **A,double *b,double *x,
-              double **u,double dx, double dy)
+              double **u,double dx, double dy, int BC)
 {
     int i,j,k,l;
     //--------------------------------
@@ -110,18 +107,24 @@ void make_Abx(double **A,double *b,double *x,
             if (k==l){
                 if (k==0 || k==ROW-1){
                   for (i=0;i<ROW;i++){
-                      A[COL*k+i][ROW*l+i]   = 1;
+                      A[COL*k+i][ROW*l+i]   = -1;
                   }
                 }
                 else{
                   for (i=0;i<ROW;i++){
                       if (i == 0){
                           A[COL*k+i][ROW*l+i]   = -1;
-                          A[COL*k+i+1][ROW*l+i] = 1;
+                          // if (BC == 1)
+                            A[COL*k+i+1][ROW*l+i] = 1;
+                          // else if (BC ==2)
+                          //   A[COL*k+i+1][ROW*l+i] = 0;
                       }
                       else if (i == ROW-1){
                           A[COL*k+i][ROW*l+i]   = -1;
-                          A[COL*k+i-1][ROW*l+i] = 1;
+                          // if (BC ==1)
+                            A[COL*k+i-1][ROW*l+i] = 1;
+                          // else if (BC==2)
+                          //   A[COL*k+i-1][ROW*l+i] = 0;
                       }
                       else {
                           A[COL*k+i][ROW*l+i]   = -4;
@@ -172,12 +175,23 @@ void make_Abx(double **A,double *b,double *x,
     //--------------------------------
     for (i=0;i<ROW;i++){
         for (j=0;j<COL;j++){
-          if (i==0 || i==ROW-1 || j==0 || j==COL-1)
-            b[ROW*i+j] = 0;//1/(2*pow(pi,2))*func(i,j,dx,dy);
-          else
+          if (i==0 || i==ROW-1) {
+            // if ( BC==1 )
+              b[ROW*i+j] = 0;
+            // else if ( BC==2 )
+            //   b[ROW*i+j] = 1/(2*pow(pi,2))*func(i,j,dx,dy);
+          }
+          else{
+            if (j==0 || j==COL-1){
+              // if ( BC==1 )
+                b[ROW*i+j] = 0;
+              // else if ( BC==2 )
+              //   b[ROW*i+j] = 1/(2*pow(pi,2))*func(i,j,dx,dy);
+            }
+            else
               b[ROW*i+j] = dx*dx*func(i,j,dx,dy);
-
-          // printf(" i:%d, j:%d, b[i][j] : %f\n",i,j,b[ROW*i+j] );
+          }
+          printf(" i:%d, j:%d, b[i][j] : %f\n",i,j,b[ROW*i+j] );
         }
     }
 }
@@ -220,7 +234,7 @@ double vvdot(double *a, double *b)
     int i;
     double c = 0;
 
-    for (i=0;i<ROW*COL;i++){
+    for (i=1;i<ROW*COL;i++){
         c = c + a[i]*b[i];
     }
 

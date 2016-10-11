@@ -92,6 +92,7 @@ int main(void)
     printf("\n");
     printf("Nx : %d, Ny : %d, dx : %f, dy : %f \n",ROW,COL,dx,dy);
     printf("Tolerance : %f, Omega : %f \n",tol, omega);
+
     //-----------------------------
     //      Analytic Solutions
     //-----------------------------
@@ -132,6 +133,8 @@ int main(void)
    file_name = "CG_result.plt";
    write_u(dir_name,file_name,u,dx,dy);
 
+   free(u);
+   free(u_anal);
 
     return 0;
 }

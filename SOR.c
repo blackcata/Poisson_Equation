@@ -9,7 +9,6 @@ void SOR(double **p,double dx, double dy, double tol, double omega, int *iter,in
     double beta,rms;
     double SUM1,SUM2;
     double p_new[ROW][COL]={0};
-    printf(" %d %d \n",COL,ROW);
 
     beta = dx/dy;
 
