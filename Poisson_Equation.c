@@ -37,9 +37,9 @@
 //-----------------------------------
 // Poisson Solvers - Jacobi, SOR, CG
 //-----------------------------------
-void Jacobi(double **p,double dx, double dy, double tol, int BC);
-void SOR(double **p,double dx, double dy, double tol, double omega,int BC);
-void Conjugate_Gradient(double **p,double dx, double dy, double tol, int BC);
+void Jacobi(double **p,double dx, double dy, double tol, int *iter,int BC);
+void SOR(double **p,double dx, double dy, double tol, double omega,int *iter,int BC);
+void Conjugate_Gradient(double **p,double dx, double dy, double tol, int *iter,int BC);
 
 //-----------------------------------
 //        Productivity tools
@@ -53,19 +53,20 @@ void write_u(char *dir_nm,char *file_nm, double **p,double dx, double dy);
 //-----------------------------------
 void func_anal(double **p, int row_num, int col_num, double dx, double dy);
 double func(int i, int j, double dx, double dy);
-
+void error_rms(double **p, double **p_anal, double *err);
 
 int main(void)
 {
     char *dir_name ;
     char *file_name ;
     int i,j,k;
-    int Nx, Ny, BC;
+    int Nx, Ny, BC, iter;
 
     double **u;
     double **u_anal;
     double Lx = 1.0, Ly = 1.0;
-    double dx, dy, tol, omega;
+    double dx, dy, tol, omega, err;
+
 
     u      = (double **) malloc(ROW *sizeof(double));
     u_anal = (double **) malloc(ROW *sizeof(double));
@@ -78,7 +79,7 @@ int main(void)
     //--------------------
     //   Initial setting
     //--------------------
-
+    iter = 0;
     dir_name = "./RESULT/";
 
     dx = Lx/(ROW-1);
@@ -91,40 +92,46 @@ int main(void)
     printf("\n");
     printf("Nx : %d, Ny : %d, dx : %f, dy : %f \n",ROW,COL,dx,dy);
     printf("Tolerance : %f, Omega : %f \n",tol, omega);
+    //-----------------------------
+    //      Analytic Solutions
+    //-----------------------------
+    file_name = "Analytic_solution.plt";
+    func_anal(u_anal,ROW,COL,dx,dy);
+    write_u(dir_name,file_name,u_anal,dx,dy);
 
-  //  //-----------------------------
-  //  //        Jacobi Method
-  //  //-----------------------------
-  //  initialization(u);
-  //  Jacobi(u,dx,dy,tol,BC);
-   //
-  //  file_name = "Jacobi_result.plt";
-  //  write_u(dir_name,file_name,u,dx,dy);
-   //
-  //  //-----------------------------
-  //  //         SOR Method
-  //  //-----------------------------
-  //  initialization(u);
-  //  SOR(u,dx,dy,tol,omega,BC);
-   //
-  //  file_name = "SOR_result.plt";
-  //  write_u(dir_name,file_name,u,dx,dy);
+   //-----------------------------
+   //        Jacobi Method
+   //-----------------------------
+   initialization(u);
+   Jacobi(u,dx,dy,tol,&iter,BC);
+   error_rms(u,u_anal,&err);
+   printf("Jacobi Method - Error : %f, Iteration : %d \n",err,iter);
+
+   file_name = "Jacobi_result.plt";
+   write_u(dir_name,file_name,u,dx,dy);
+
+   //-----------------------------
+   //         SOR Method
+   //-----------------------------
+   initialization(u);
+   SOR(u,dx,dy,tol,omega,&iter,BC);
+   error_rms(u,u_anal,&err);
+   printf("SOR Method - Error : %f, Iteration : %d \n",err,iter);
+
+   file_name = "SOR_result.plt";
+   write_u(dir_name,file_name,u,dx,dy);
 
    //-----------------------------
    //  Conjugate Gradient Method
    //-----------------------------
    initialization(u);
-   Conjugate_Gradient(u,dx,dy,tol,BC);
+   Conjugate_Gradient(u,dx,dy,tol,&iter,BC);
+   error_rms(u,u_anal,&err);
+   printf("CG method - Error : %f, Iteration : %d \n",err,iter);
 
    file_name = "CG_result.plt";
    write_u(dir_name,file_name,u,dx,dy);
 
-   //-----------------------------
-   //      Analytic Solutions
-   //-----------------------------
-   file_name = "Analytic_solution.plt";
-   func_anal(u_anal,ROW,COL,dx,dy);
-   write_u(dir_name,file_name,u_anal,dx,dy);
 
     return 0;
 }
@@ -174,4 +181,16 @@ void func_anal(double **p, int row_num, int col_num, double dx, double dy)
     for (i=0;i<row_num;i++){
         for (j=0;j<col_num;j++){
             p[i][j] = -1/(2*pow(pi,2))*sin(pi*i*dx)*cos(pi*j*dy); }}
+}
+
+void error_rms(double **p, double **p_anal, double *err)
+{
+  int i,j;
+  for (i=0;i<ROW;i++){
+    for (j=0;j<COL;j++){
+      *err = *err + pow(p[i][j] -p_anal[i][j],2);
+    }
+  }
+
+  *err = sqrt(*err)/(ROW*COL);
 }

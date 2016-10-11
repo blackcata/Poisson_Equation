@@ -2,7 +2,7 @@
 #include "def.h"
 double func(int i, int j, double dx, double dy);
 
-void Jacobi(double **p,double dx, double dy, double tol, int BC)
+void Jacobi(double **p,double dx, double dy, double tol, int *iter,int BC)
 {
     int i,j,k,it;
     int Nx,Ny;
@@ -28,6 +28,8 @@ void Jacobi(double **p,double dx, double dy, double tol, int BC)
         //------------------------
         //  Boundary conditions
         //------------------------
+
+        // Boundary - Case 1
         if (BC == 1){
           for (j=0;j<COL;j++){
               p_new[0][j] = 0;
@@ -39,6 +41,7 @@ void Jacobi(double **p,double dx, double dy, double tol, int BC)
               p_new[i][COL-1] = p_new[i][COL-2];
           }
         }
+        // Boundary - Case 2
         else if (BC ==2){
           for (j=0;j<COL;j++){
               p_new[0][j] = -1/(2*pow(pi,2))*func(0,j,dx,dy);
@@ -63,8 +66,12 @@ void Jacobi(double **p,double dx, double dy, double tol, int BC)
             }
         }
 
-        if ( SUM2/SUM1 < tol )
+        if ( SUM2/SUM1 < tol ){
+            *iter = it;
             break;
+        }
+
+        // printf("Iteration : %d, SUM1 : %f, SUM2 : %f, Ratio : %f \n",it,SUM1,SUM2,SUM2/SUM1);
 
         //------------------------
         //         Update
@@ -73,6 +80,5 @@ void Jacobi(double **p,double dx, double dy, double tol, int BC)
             for (j=0;j<COL;j++){
                 p[i][j] = p_new[i][j];}}
 
-        printf("Iteration : %d, SUM1 : %f, SUM2 : %f, Ratio : %f \n",it,SUM1,SUM2,SUM2/SUM1);
     }
 }

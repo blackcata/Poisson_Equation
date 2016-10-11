@@ -3,7 +3,7 @@
 #include "def.h"
 double func(int i, int j, double dx, double dy);
 
-void SOR(double **p,double dx, double dy, double tol, double omega, int BC)
+void SOR(double **p,double dx, double dy, double tol, double omega, int *iter,int BC)
 {
     int i,j,k,it;
     double beta,rms;
@@ -68,9 +68,11 @@ void SOR(double **p,double dx, double dy, double tol, double omega, int BC)
             }
         }
 
-        if ( SUM2/SUM1 < tol )
+        if ( SUM2/SUM1 < tol ){
+            *iter = it;
             break;
-
+        }
+        // printf("Iteration : %d, SUM1 : %f, SUM2 : %f, Ratio : %f \n",it,SUM1,SUM2,SUM2/SUM1);
         //------------------------
         //         Update
         //------------------------
@@ -78,8 +80,5 @@ void SOR(double **p,double dx, double dy, double tol, double omega, int BC)
             for (j=0;j<COL;j++){
                 p[i][j] = p_new[i][j];}}
 
-
-
-        printf("Iteration : %d, SUM1 : %f, SUM2 : %f, Ratio : %f \n",it,SUM1,SUM2,SUM2/SUM1);
     }
 }
