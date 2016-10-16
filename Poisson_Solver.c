@@ -50,7 +50,7 @@ void poisson_solver(double **u, double **u_anal, double tol, double omega,
       initialization(u);
       Jacobi(u,dx,dy,tol,&tot_time,&iter,BC);
       error_rms(u,u_anal,&err);
-      printf("Jacobi Method - Error : %f, Iteration : %d, Time : %f s \n",err,iter,tot_time);
+      printf("Jacobi Method - Error : %e, Iteration : %d, Time : %f s \n",err,iter,tot_time);
 
       file_name = "Jacobi_result.plt";
       write_u(dir_name,file_name,u,dx,dy);
@@ -63,7 +63,7 @@ void poisson_solver(double **u, double **u_anal, double tol, double omega,
        initialization(u);
        SOR(u,dx,dy,tol,omega,&tot_time,&iter,BC);
        error_rms(u,u_anal,&err);
-       printf("SOR Method - Error : %f, Iteration : %d, Time : %f s \n",err,iter,tot_time);
+       printf("SOR Method - Error : %e, Iteration : %d, Time : %f s \n",err,iter,tot_time);
 
        file_name = "SOR_result.plt";
        write_u(dir_name,file_name,u,dx,dy);
@@ -76,7 +76,7 @@ void poisson_solver(double **u, double **u_anal, double tol, double omega,
        initialization(u);
        Conjugate_Gradient(u,dx,dy,tol,&tot_time,&iter,BC);
        error_rms(u,u_anal,&err);
-       printf("CG method - Error : %f, Iteration : %d, Time : %f s \n",err,iter,tot_time);
+       printf("CG method - Error : %e, Iteration : %d, Time : %f s \n",err,iter,tot_time);
 
        file_name = "CG_result.plt";
        write_u(dir_name,file_name,u,dx,dy);

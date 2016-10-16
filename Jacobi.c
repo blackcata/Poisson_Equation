@@ -15,7 +15,6 @@ void Jacobi(double **p,double dx, double dy, double tol,
     time_t start_t =0, end_t =0;
 
     start_t = clock();
-
     beta = dx/dy;
 
     for (it=1;it<itmax;it++){

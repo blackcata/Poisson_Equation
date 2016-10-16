@@ -80,7 +80,7 @@ int main(void)
     //        = 3 : Conjugate Gradient method
     //----------------------------------------
     BC = 1;
-    method = 3;
+    method = 1;
 
     printf("\n");
     printf("---------------------------------------- \n");
@@ -89,9 +89,7 @@ int main(void)
     printf("---------------------------------------- \n");
     printf("\n");
 
-    for (method=1;method<2;method++){
-      poisson_solver(u,u_anal,tol,omega,BC,method,dir_name);
-    }
+    poisson_solver(u,u_anal,tol,omega,BC,method,dir_name);
 
     free(u);
     free(u_anal);
