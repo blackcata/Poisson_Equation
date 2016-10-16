@@ -31,7 +31,7 @@
 
 #include <stdio.h>
 #include <math.h>
-
+#include <stdlib.h>
 #include <string.h>
 #include "def.h"
 
@@ -71,7 +71,16 @@ int main(void)
     omega = 1.8;
     dir_name = "./RESULT/";
 
+    printf("\n");
+    printf("---------------------------------------- \n");
+    printf("Nx : %d, Ny : %d\n",ROW,COL);
+    printf("Tolerance : %f, Omega : %f \n",tol, omega);
+    printf("---------------------------------------- \n");
+    printf("\n");
+
     //----------------------------------------
+    //       Poisson Solver Type
+    //
     // BC = 1 : Boundary condition Case 1
     //    = 2 : Boundary condition Case 2
     //
@@ -81,13 +90,6 @@ int main(void)
     //----------------------------------------
     BC = 1;
     method = 1;
-
-    printf("\n");
-    printf("---------------------------------------- \n");
-    printf("Nx : %d, Ny : %d\n",ROW,COL);
-    printf("Tolerance : %f, Omega : %f \n",tol, omega);
-    printf("---------------------------------------- \n");
-    printf("\n");
 
     poisson_solver(u,u_anal,tol,omega,BC,method,dir_name);
 
