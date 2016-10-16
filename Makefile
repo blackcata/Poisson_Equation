@@ -1,6 +1,6 @@
 IC=icc
 TARGET= Poisson_Equation
-OBJECT= Poisson_Equation.o Jacobi.o SOR.o Conjugate_Gradient.o
+OBJECT= Poisson_Equation.o Poisson_Solver.o Jacobi.o SOR.o Conjugate_Gradient.o
 
 all : $(TARGET)
 $(TARGET) : $(OBJECT)
@@ -13,3 +13,4 @@ $(TARGET) : $(OBJECT)
 
 clean :
 	rm -f *.o
+	rm -f ./RESULT/*.plt
