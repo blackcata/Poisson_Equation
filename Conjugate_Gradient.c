@@ -43,6 +43,12 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
       A[i] = (double *) malloc(ROW*COL * sizeof(double));
     }
 
+    for (i=0;i<ROW*COL;i++){
+        for (j=0;j<ROW*COL;j++){
+            A[i][j] = 0;
+        }
+    }
+
     make_Abx(A,b,x,p,dx,dy);
     vmdot(A,x,tmp);
 
