@@ -9,10 +9,12 @@
 //-----------------------------------
 double norm_L2(double *a);
 double vvdot(double *a, double *b);
-void vmdot(double **A,double *x,double *b);
+void vmdot(double *nnzeros, int *col_ind,int *row_ptr,
+           double *x,double *b);
 
-void make_Abx(double **A, double *b, double *x, double**u
-              ,double dx, double dy);
+void make_Abx(double *nnzeros, int *col_ind,int *row_ptr,
+              double *b, double *x, double **u,
+              int nnz,double dx, double dy);
 
 //-----------------------------------
 //      Mathematical functions
@@ -22,36 +24,31 @@ double func(int i, int j, double dx, double dy);
 void Conjugate_Gradient(double **p,double dx, double dy, double tol,
                                    double *tot_time,int *iter, int BC)
 {
-    int i,j,k,it;
+    int i,j,it,nnz;
     double alpha,beta ;
 
-    double **A;
-    double *tmp,*x,*b,*z,*r,*r_new;
+    int *col_ind, *row_ptr;
+    double *nnzeros,*tmp,*x,*b,*z,*r,*r_new;
 
     time_t start_t =0, end_t =0;
 
     start_t = clock();
+    nnz = 5*(ROW-2)*(ROW-2) + 2*(ROW-2)*2 + ROW*2;
 
-    A = (double **) malloc(ROW*COL * sizeof(double));
-    for (i=0;i<ROW*COL;i++)
-    {
-      A[i] = (double *) malloc(ROW*COL * sizeof(double));
-    }
-    tmp    = (double *) malloc(ROW*COL * sizeof(double));
-    x      = (double *) malloc(ROW*COL * sizeof(double));
-    b      = (double *) malloc(ROW*COL * sizeof(double));
-    z      = (double *) malloc(ROW*COL * sizeof(double));
-    r      = (double *) malloc(ROW*COL * sizeof(double));
-    r_new  = (double *) malloc(ROW*COL * sizeof(double));
+    col_ind  = (int *) malloc(nnz * sizeof(int));
+    row_ptr  = (int *) malloc((ROW*COL+1) * sizeof(int));
 
-    for (i=0;i<ROW*COL;i++){
-        for (j=0;j<ROW*COL;j++){
-            A[i][j] = 0;
-        }
-    }
+    nnzeros  = (double *) malloc(nnz * sizeof(double));
+    tmp      = (double *) malloc(ROW*COL * sizeof(double));
+    x        = (double *) malloc(ROW*COL * sizeof(double));
+    b        = (double *) malloc(ROW*COL * sizeof(double));
+    z        = (double *) malloc(ROW*COL * sizeof(double));
+    r        = (double *) malloc(ROW*COL * sizeof(double));
+    r_new    = (double *) malloc(ROW*COL * sizeof(double));
+    printf("nnz : %d \n",nnz);
 
-    make_Abx(A,b,x,p,dx,dy);
-    vmdot(A,x,tmp);
+    make_Abx(nnzeros,col_ind,row_ptr,b,x,p,nnz,dx,dy);
+    vmdot(nnzeros,col_ind,row_ptr,x,tmp);
 
    for (i=0;i<ROW;i++){
        for (j=0;j<COL;j++){
@@ -65,7 +62,7 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
    //---------------------------------------
    for (it=0;it<itmax;it++)
    {
-       vmdot(A,z,tmp);
+       vmdot(nnzeros,col_ind,row_ptr,z,tmp);
        alpha = vvdot(r,r)/vvdot(z,tmp);
 
 
@@ -79,7 +76,10 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
        if (norm_L2(r_new) < tol ){
           // printf("iteration : %d, tol : %f, value : %f\n",it,tol,norm_L2(r_new) );
           *iter = it;
-          free(A);
+
+          free(col_ind);
+          free(row_ptr);
+          free(nnzeros);
           free(tmp);
           free(x);
           free(b);
@@ -118,88 +118,70 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
 //------------------------------------------------------------
 //             Make Stiffness matrix of CG method
 //------------------------------------------------------------
-void make_Abx(double **A,double *b,double *x,
-              double **u,double dx, double dy)
-{
-    int i,j,k,l;
-    //--------------------------------
-    //         Make Matrix A
-    //--------------------------------
-    for (k=0;k<ROW;k++){
-        for (l=0;l<COL;l++){
-            if (k==l){
-                if (k==0 || k==ROW-1){
-                  for (i=0;i<ROW;i++){
-                      A[COL*k+i][ROW*l+i]   = 1;
-                  }
-                }
-                else{
-                  for (i=0;i<ROW;i++){
-                      if (i == 0){
-                          A[COL*k+i][ROW*l+i]   = -1;
-                          A[COL*k+i+1][ROW*l+i] = 1;
-                      }
-                      else if (i == ROW-1){
-                          A[COL*k+i][ROW*l+i]   = -1;
-                          A[COL*k+i-1][ROW*l+i] = 1;
-                      }
-                      else {
-                          A[COL*k+i][ROW*l+i]   = -4;
-                          A[COL*k+i-1][ROW*l+i] = 1;
-                          A[COL*k+i+1][ROW*l+i] = 1;
-                      }
-                  }
-                }
-            }
+void make_Abx(double *nnzeros, int *col_ind,int *row_ptr,
+              double *b, double *x, double **u,
+              int nnz,double dx, double dy){
+  int i,j,row,row_out,row_in,count=0;
 
-            else if ( abs(k-l) == 1 && k!=0 && k!=ROW-1){
-                for (i=0;i<ROW;i++){
-                  if (i==0 || i==ROW-1)
-                    A[COL*k+i][ROW*l+i] = 0;
-                  else
-                    A[COL*k+i][ROW*l+i] = 1;
-                }
-            }
-            else{
-                for (i=0;i<ROW;i++){
-                    for (j=0;j<COL;j++){
-                        A[COL*k+i][ROW*l+j] = 0;
-                    }
-                }
-            }
-            // printf("i: %d, j :  %d \n",k,l);
-            // for (j=0;j<ROW;j++){
-            //   printf("%d ",i);
-            //   for (i=0;i<COL;i++){
-            //       printf("%f ",A[COL*k+i][ROW*l+j]);
-            //   }
-            //   printf("\n");
-            // }
-            // printf("\n");
-        }
-    }
+  //----------------------------------------
+  //         Make Matrix A using CSR
+  //----------------------------------------
+  for (row_out=0;row_out<ROW;row_out++){
+    for (row_in=0;row_in<ROW;row_in++){
 
-    //--------------------------------
-    //         Make Vector x
-    //--------------------------------
-    for (i=0;i<ROW;i++){
-        for (j=0;j<COL;j++){
-            x[ROW*i+j] = u[i][j];
-        }
-    }
-    //--------------------------------
-    //        Make Vector b
-    //--------------------------------
-    for (i=0;i<ROW;i++){
-        for (j=0;j<COL;j++){
-          if (i==0 || i==ROW-1 || j==0 || j==COL-1)
-            b[ROW*i+j] = 0;//1/(2*pow(pi,2))*func(i,j,dx,dy);
-          else
-              b[ROW*i+j] = dx*dx*func(i,j,dx,dy);
+        row = row_out*ROW+row_in;
+        row_ptr[row] = count  ;
 
-          // printf(" i:%d, j:%d, b[i][j] : %f\n",i,j,b[ROW*i+j] );
+        if(row_out == 0){
+          nnzeros[count] = 1; col_ind[count++] = row;
         }
+        else if (row_out == ROW-1 ){
+          nnzeros[count] = 1; col_ind[count++] = row;
+        }
+        else{
+          if (row_in == 0){
+            nnzeros[count] = -1 ; col_ind[count++] = row;
+            nnzeros[count] = 1  ; col_ind[count++] = row+1;
+          }
+          else if (row_in == ROW-1){
+            nnzeros[count] = 1  ; col_ind[count++] = row-1;
+            nnzeros[count] = -1 ; col_ind[count++] = row;
+          }
+          else{
+            nnzeros[count] = 1;  col_ind[count++] = row-ROW;
+            nnzeros[count] = 1;  col_ind[count++] = row-1;
+            nnzeros[count] = -4; col_ind[count++] = row;
+            nnzeros[count] = 1;  col_ind[count++] = row+1;
+            nnzeros[count] = 1;  col_ind[count++] = row+ROW;
+          }
+        }
+
+      // printf("row : %d, count : %d, nnzeros : %f, row in : %d, row_out : %d \n",row,count,nnzeros[count-1],row_in,row_out );
     }
+  }
+  row_ptr[ROW*COL] = count;
+
+  //--------------------------------
+  //         Make Vector x
+  //--------------------------------
+  for (i=0;i<ROW;i++){
+      for (j=0;j<COL;j++){
+          x[ROW*i+j] = u[i][j];
+      }
+  }
+  //--------------------------------
+  //        Make Vector b
+  //--------------------------------
+  for (i=0;i<ROW;i++){
+      for (j=0;j<COL;j++){
+        if (i==0 || i==ROW-1 || j==0 || j==COL-1)
+          b[ROW*i+j] = 0;//1/(2*pow(pi,2))*func(i,j,dx,dy);
+        else
+            b[ROW*i+j] = dx*dx*func(i,j,dx,dy);
+
+        // printf(" i:%d, j:%d, b[i][j] : %f\n",i,j,b[ROW*i+j] );
+      }
+  }
 }
 
 //------------------------------------------------------------
@@ -216,19 +198,22 @@ double norm_L2(double *a)
     return sqrt(sum);
 }
 
-void vmdot(double **A,double *x,double *b)
+void vmdot(double *nnzeros, int *col_ind,int *row_ptr,
+           double *x,double *b)
 {
     int i,j;
+    double sum ;
 
     for (i=0;i<ROW*COL;i++){
             b[i] = 0;
     }
 
     for (i=0;i<ROW*COL;i++){
-        for (j=0;j<ROW*COL;j++){
-            b[i] = b[i] + A[i][j]*x[j];
+        sum = 0;
+        for (j=row_ptr[i];j<row_ptr[i+1];j++){
+          sum += nnzeros[j] * x[col_ind[j]];
         }
-
+        b[i] = sum;
     }
 }
 
