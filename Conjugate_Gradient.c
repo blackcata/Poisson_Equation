@@ -75,7 +75,6 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
            }
        }
 
-
        if (norm_L2(r_new) < tol ){
           // printf("iteration : %d, tol : %f, value : %f\n",it,tol,norm_L2(r_new) );
           *iter = it;
@@ -214,10 +213,7 @@ void vmdot(double **A,double *x,double *b)
     int i,j;
 
     for (i=0;i<ROW*COL;i++){
-        for (j=0;j<ROW*COL;j++){
             b[i] = 0;
-        }
-
     }
 
     for (i=0;i<ROW*COL;i++){
