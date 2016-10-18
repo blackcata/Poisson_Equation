@@ -76,7 +76,17 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
        if (norm_L2(r_new) < tol ){
           // printf("iteration : %d, tol : %f, value : %f\n",it,tol,norm_L2(r_new) );
           *iter = it;
-
+          //---------------------------------------
+          //   Redistribute x vector to array
+          //---------------------------------------
+          for (i=0;i<ROW;i++)
+          {
+            for (j=0;j<COL;j++)
+            {
+              p[i][j] = x[COL*i+j];
+            }
+          }
+          
           free(col_ind);
           free(row_ptr);
           free(nnzeros);
@@ -100,18 +110,6 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
            }
        }
    }
-
-   //---------------------------------------
-   //   Redistribute x vector to array
-   //---------------------------------------
-   for (i=0;i<ROW;i++)
-   {
-     for (j=0;j<COL;j++)
-     {
-       p[i][j] = x[COL*i+j];
-     }
-   }
-
 
 }
 
