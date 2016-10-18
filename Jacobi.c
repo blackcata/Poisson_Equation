@@ -80,6 +80,7 @@ void Jacobi(double **p,double dx, double dy, double tol,
         }
 
         if ( SUM2/SUM1 < tol ){
+            free(p_new);
             *iter = it;
             end_t = clock();
             *tot_time = (double)(end_t - start_t)/(CLOCKS_PER_SEC);
