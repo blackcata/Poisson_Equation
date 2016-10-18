@@ -26,7 +26,7 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
     double alpha,beta ;
 
     double **A;
-    double *tmp,*x,*b,*z,*r,*r_new;
+    double *tmp, *x, *b, *z, *r, *r_new;
 
     time_t start_t =0, end_t =0;
 
@@ -44,11 +44,11 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
     r      = (double *) malloc(ROW*COL * sizeof(double));
     r_new  = (double *) malloc(ROW*COL * sizeof(double));
 
-    for (i=0;i<ROW*COL;i++){
-        for (j=0;j<ROW*COL;j++){
-            A[i][j] = 0;
-        }
-    }
+    // for (i=0;i<ROW*COL;i++){
+    //     for (j=0;j<ROW*COL;j++){
+    //         A[i][j] = 0;
+    //     }
+    // }
 
     make_Abx(A,b,x,p,dx,dy);
     vmdot(A,x,tmp);
@@ -78,6 +78,16 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
 
        if (norm_L2(r_new) < tol ){
           // printf("iteration : %d, tol : %f, value : %f\n",it,tol,norm_L2(r_new) );
+          //---------------------------------------
+          //   Redistribute x vector to array
+          //---------------------------------------
+          for (i=0;i<ROW;i++)
+          {
+            for (j=0;j<COL;j++)
+            {
+              p[i][j] = x[COL*i+j];
+            }
+          }
           *iter = it;
           free(A);
           free(tmp);
@@ -100,18 +110,6 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
            }
        }
    }
-
-   //---------------------------------------
-   //   Redistribute x vector to array
-   //---------------------------------------
-   for (i=0;i<ROW;i++)
-   {
-     for (j=0;j<COL;j++)
-     {
-       p[i][j] = x[COL*i+j];
-     }
-   }
-
 
 }
 
