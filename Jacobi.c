@@ -4,6 +4,7 @@
 #include <time.h>
 #include "def.h"
 double func(int i, int j, double dx, double dy);
+void initialization(double **p);
 
 void Jacobi(double **p,double dx, double dy, double tol,
                        double *tot_time,int *iter,int BC)
@@ -12,11 +13,18 @@ void Jacobi(double **p,double dx, double dy, double tol,
     int Nx,Ny;
     double beta,rms;
     double SUM1,SUM2;
-    double p_new[ROW][COL]={0};
+    double **p_new;
     time_t start_t =0, end_t =0;
 
     start_t = clock();
     beta = dx/dy;
+
+    p_new = (double **) malloc(ROW *sizeof(double));
+    for (i=0;i<ROW;i++)
+    {
+      p_new[i]      = (double *) malloc(COL * sizeof(double));
+    }
+    initialization(p_new);
 
     for (it=1;it<itmax;it++){
         SUM1 = 0;
