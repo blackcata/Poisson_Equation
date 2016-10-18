@@ -7,8 +7,8 @@ double func(int i, int j, double dx, double dy);
 void SOR(double **p,double dx, double dy, double tol, double omega,
                                double *tot_time,int *iter,int BC)
 {
-    int i,j,k,it;
-    double beta,rms;
+    int i,j,it;
+    double beta;
     double SUM1,SUM2;
     double **p_new;
     time_t start_t =0, end_t =0;
