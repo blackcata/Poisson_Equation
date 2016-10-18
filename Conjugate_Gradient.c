@@ -26,13 +26,8 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
     double alpha,beta ;
 
     double **A;
-    double tmp[ROW*COL] = {0};
+    double *tmp,*x,*b,*z,*r,*r_new;
 
-    double x[ROW*COL] = {0};
-    double b[ROW*COL] = {0};
-    double z[ROW*COL] = {0};
-    double r[ROW*COL] = {0};
-    double r_new[ROW*COL] = {0};
     time_t start_t =0, end_t =0;
 
     start_t = clock();
@@ -42,6 +37,12 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
     {
       A[i] = (double *) malloc(ROW*COL * sizeof(double));
     }
+    tmp    = (double *) malloc(ROW*COL * sizeof(double));
+    x      = (double *) malloc(ROW*COL * sizeof(double));
+    b      = (double *) malloc(ROW*COL * sizeof(double));
+    z      = (double *) malloc(ROW*COL * sizeof(double));
+    r      = (double *) malloc(ROW*COL * sizeof(double));
+    r_new  = (double *) malloc(ROW*COL * sizeof(double));
 
     for (i=0;i<ROW*COL;i++){
         for (j=0;j<ROW*COL;j++){
@@ -79,6 +80,13 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
           // printf("iteration : %d, tol : %f, value : %f\n",it,tol,norm_L2(r_new) );
           *iter = it;
           free(A);
+          free(tmp);
+          free(x);
+          free(b);
+          free(z);
+          free(r);
+          free(r_new);
+
           end_t = clock();
           *tot_time = (double)(end_t - start_t)/(CLOCKS_PER_SEC);
           break;
@@ -144,7 +152,7 @@ void make_Abx(double **A,double *b,double *x,
                 }
             }
 
-            else if ( abs(k-l) == 1 ){
+            else if ( abs(k-l) == 1 && k!=0 && k!=ROW-1){
                 for (i=0;i<ROW;i++){
                   if (i==0 || i==ROW-1)
                     A[COL*k+i][ROW*l+i] = 0;
