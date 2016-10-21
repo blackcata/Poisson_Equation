@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
+#include <mkl.h>
+
 #include "def.h"
 
 //-----------------------------------
@@ -85,7 +87,7 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
               p[i][j] = x[COL*i+j];
             }
           }
-          
+
           free(col_ind);
           free(row_ptr);
           free(nnzeros);
