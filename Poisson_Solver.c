@@ -94,6 +94,8 @@ double func(int i,int j,double dx,double dy)
 void initialization(double **p)
 {
     int i,j;
+
+    #pragma omp parallel for shared(p) private(i,j)
     for (i=0;i<ROW;i++){
         for (j=0;j<COL;j++){
             p[i][j] = 0; }}
@@ -103,10 +105,14 @@ void initialization(double **p)
 void error_rms(double **p, double **p_anal, double *err)
 {
   int i,j;
+  double err_p = 0;
+
+  #pragma omp parallel for shared(p_anal,p) private(i,j) reduction(+:err_p)
   for (i=0;i<ROW;i++){
     for (j=0;j<COL;j++){
-      *err = *err + pow(p[i][j] -p_anal[i][j],2);
+      err_p = err_p + pow(p[i][j] -p_anal[i][j],2);
     }
+    *err = *err + err_p
   }
 
   *err = sqrt(*err)/(ROW*COL);
@@ -116,6 +122,7 @@ void error_rms(double **p, double **p_anal, double *err)
 void func_anal(double **p, int row_num, int col_num, double dx, double dy)
 {
     int i,j;
+    
     for (i=0;i<row_num;i++){
         for (j=0;j<col_num;j++){
             p[i][j] = -1/(2*pow(pi,2))*sin(pi*i*dx)*cos(pi*j*dy); }}
