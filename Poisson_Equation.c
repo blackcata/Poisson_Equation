@@ -89,7 +89,7 @@ int main(void)
     //        = 3 : Conjugate Gradient method
     //----------------------------------------
     BC = 1;
-    method = 3;
+    method = 1;
 
     poisson_solver(u,u_anal,tol,omega,BC,method,dir_name);
 
