@@ -31,6 +31,7 @@ void Jacobi(double **p,double dx, double dy, double tol,
         SUM1 = 0;
         SUM2 = 0;
 
+        #pragma omp parallel for shared(p_new, p) private(i,j)
         for (i=1;i<ROW-1;i++){
             for (j=1;j<COL-1;j++){
             p_new[i][j] =  (p[i+1][j]+p[i-1][j]
@@ -45,11 +46,12 @@ void Jacobi(double **p,double dx, double dy, double tol,
 
         // Boundary - Case 1
         if (BC == 1){
+          #pragma omp parallel for shared(p_new) private(j) 
           for (j=0;j<COL;j++){
               p_new[0][j] = 0;
               p_new[ROW-1][j] = 0;
           }
-
+          #pragma omp parallel for shared(p_new) private(i)
           for (i=0;i<ROW;i++) {
               p_new[i][0] = p_new[i][1];
               p_new[i][COL-1] = p_new[i][COL-2];
@@ -57,11 +59,12 @@ void Jacobi(double **p,double dx, double dy, double tol,
         }
         // Boundary - Case 2
         else if (BC ==2){
+          #pragma omp parallel for shared(p_new) private(j)
           for (j=0;j<COL;j++){
               p_new[0][j] = -1/(2*pow(pi,2))*func(0,j,dx,dy);
               p_new[ROW-1][j] = -1/(2*pow(pi,2))*func(ROW-1,j,dx,dy);
           }
-
+          #pragma omp parallel for shared(p_new) private(i)
           for (i=0;i<ROW;i++) {
               p_new[i][0] = -1/(2*pow(pi,2))*func(i,0,dx,dy);
               p_new[i][COL-1] = -1/(2*pow(pi,2))*func(i,COL-1,dx,dy);
@@ -93,6 +96,7 @@ void Jacobi(double **p,double dx, double dy, double tol,
         //------------------------
         //         Update
         //------------------------
+        #pragma omp parallel for shared(p_new, p) private(i,j)
         for (i=0;i<ROW;i++){
             for (j=0;j<COL;j++){
                 p[i][j] = p_new[i][j];}}
