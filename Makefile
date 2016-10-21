@@ -1,6 +1,7 @@
 IC=icc
 TARGET= Poisson_Equation
 OBJECT= Poisson_Equation.o Poisson_Solver.o Jacobi.o SOR.o Conjugate_Gradient.o
+FCFLAGS= -O2 -I${MKL HOME}/include -L/${MKL HOME}/lib/intel64 -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -lpthread
 
 all : $(TARGET)
 $(TARGET) : $(OBJECT)
@@ -9,7 +10,7 @@ $(TARGET) : $(OBJECT)
 .SUFFIXES. : .o .c
 
 %.o : %.c
-	$(IC) -c $<
+	$(IC) $(FCFLAGS) -c $<
 
 clean :
 	rm -f *.o
