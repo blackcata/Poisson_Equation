@@ -74,7 +74,6 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
        }
 
        if (norm_L2(r_new) < tol ){
-          // printf("iteration : %d, tol : %f, value : %f\n",it,tol,norm_L2(r_new) );
           *iter = it;
           //---------------------------------------
           //   Redistribute x vector to array
@@ -154,7 +153,6 @@ void make_Abx(double *nnzeros, int *col_ind,int *row_ptr,
           }
         }
 
-      // printf("row : %d, count : %d, nnzeros : %f, row in : %d, row_out : %d \n",row,count,nnzeros[count-1],row_in,row_out );
     }
   }
   row_ptr[ROW*COL] = count;
@@ -177,7 +175,6 @@ void make_Abx(double *nnzeros, int *col_ind,int *row_ptr,
         else
             b[ROW*i+j] = dx*dx*func(i,j,dx,dy);
 
-        // printf(" i:%d, j:%d, b[i][j] : %f\n",i,j,b[ROW*i+j] );
       }
   }
 }
@@ -191,7 +188,7 @@ double norm_L2(double *a)
     double sum = 0;
 
     for (i=0;i<ROW*COL;i++){
-        sum = sum + pow(a[i],2);
+        sum = sum + a[i]*a[i];
     }
     return sqrt(sum);
 }
