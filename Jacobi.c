@@ -46,7 +46,7 @@ void Jacobi(double **p,double dx, double dy, double tol,
 
         // Boundary - Case 1
         if (BC == 1){
-          #pragma omp parallel for shared(p_new) private(j) 
+          #pragma omp parallel for shared(p_new) private(j)
           for (j=0;j<COL;j++){
               p_new[0][j] = 0;
               p_new[ROW-1][j] = 0;
@@ -74,13 +74,18 @@ void Jacobi(double **p,double dx, double dy, double tol,
         //------------------------
         //  Convergence Criteria
         //------------------------
+        double SUM1_p = 0.0, SUM2_p = 0.0;
+
+        #pragma omp parallel for shared(p_new,p) private(i,j) reduction(+:SUM1_p,SUM2_p) ;
         for (i=1;i<ROW-1;i++){
             for (j=1;j<COL-1;j++){
-                SUM1 += fabs(p_new[i][j]);
-                SUM2 += fabs(p_new[i+1][j] + p_new[i-1][j]
+                SUM1_p += fabs(p_new[i][j]);
+                SUM2_p += fabs(p_new[i+1][j] + p_new[i-1][j]
                              + pow(beta,2)*(p_new[i][j+1] + p_new[i][j-1])
                              - (2+2*pow(beta,2))*p_new[i][j]-dx*dx*func(i,j,dx,dy));
             }
+            SUM1 += SUM1_p
+            SUM2 += SUM2_p
         }
 
         if ( SUM2/SUM1 < tol ){
