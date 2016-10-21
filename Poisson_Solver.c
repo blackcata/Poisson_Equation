@@ -2,6 +2,7 @@
 #include <math.h>
 
 #include <string.h>
+#include <omp.h>
 #include "def.h"
 
 void initialization(double **p);

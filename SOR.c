@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <time.h>
 #include <math.h>
+#include <omp.h>
 #include "def.h"
+
 double func(int i, int j, double dx, double dy);
 
 void SOR(double **p,double dx, double dy, double tol, double omega,
