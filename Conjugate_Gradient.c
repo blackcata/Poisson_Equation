@@ -106,7 +106,7 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
        }
 
        beta = vvdot(r_new,r_new)/vvdot(r,r);
-       #pragma omp parallel for shared(z,z_new,r) private(i,j)
+       #pragma omp parallel for shared(z,r_new,r) private(i,j)
        for (i=0;i<ROW;i++){
            for (j=0;j<COL;j++){
                z[COL*i+j] = r_new[COL*i+j] + beta*z[COL*i+j];
@@ -175,7 +175,7 @@ void make_Abx(double *nnzeros, int *col_ind,int *row_ptr,
   //--------------------------------
   //        Make Vector b
   //--------------------------------
-  #pragma omp parallel for shared(b) private(i,j) 
+  #pragma omp parallel for shared(b) private(i,j)
   for (i=0;i<ROW;i++){
       for (j=0;j<COL;j++){
         if (i==0 || i==ROW-1 || j==0 || j==COL-1)
@@ -197,7 +197,7 @@ double norm_L2(double *a)
     double sum = 0;
 
     for (i=0;i<ROW*COL;i++){
-        sum = sum + pow(a[i],2);
+        sum = sum + a[i]*a[i];
     }
     return sqrt(sum);
 }
