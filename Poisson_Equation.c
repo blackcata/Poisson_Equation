@@ -52,6 +52,8 @@ int main(void)
     int i, method, BC;
     double tol, omega;
 
+    int make_fold= system("mkdir RESULT");
+
     // --------------------------------------------------------
     //                    Memory allocation
     // --------------------------------------------------------
