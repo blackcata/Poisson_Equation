@@ -82,10 +82,8 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
           //   Redistribute x vector to array
           //---------------------------------------
           #pragma omp parallel for shared(p,x) private(i,j)
-          for (i=0;i<ROW;i++)
-          {
-            for (j=0;j<COL;j++)
-            {
+          for (i=0;i<ROW;i++){
+            for (j=0;j<COL;j++){
               p[i][j] = x[COL*i+j];
             }
           }
@@ -196,6 +194,7 @@ double norm_L2(double *a)
     int i;
     double sum = 0;
 
+    #pragma omp parallel for reduction(+:sum)
     for (i=0;i<ROW*COL;i++){
         sum = sum + a[i]*a[i];
     }
@@ -208,6 +207,7 @@ void vmdot(double *nnzeros, int *col_ind,int *row_ptr,
     int i,j;
     double sum ;
 
+    #pragma omp parallel for shared(b) private(i)
     for (i=0;i<ROW*COL;i++){
             b[i] = 0;
     }
