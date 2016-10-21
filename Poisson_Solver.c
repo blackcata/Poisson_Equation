@@ -112,7 +112,7 @@ void error_rms(double **p, double **p_anal, double *err)
     for (j=0;j<COL;j++){
       err_p = err_p + pow(p[i][j] -p_anal[i][j],2);
     }
-    *err = *err + err_p
+    *err = *err + err_p;
   }
 
   *err = sqrt(*err)/(ROW*COL);
@@ -122,7 +122,7 @@ void error_rms(double **p, double **p_anal, double *err)
 void func_anal(double **p, int row_num, int col_num, double dx, double dy)
 {
     int i,j;
-    
+
     for (i=0;i<row_num;i++){
         for (j=0;j<col_num;j++){
             p[i][j] = -1/(2*pow(pi,2))*sin(pi*i*dx)*cos(pi*j*dy); }}

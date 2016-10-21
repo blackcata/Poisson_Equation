@@ -51,6 +51,7 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
     make_Abx(nnzeros,col_ind,row_ptr,b,x,p,nnz,dx,dy);
     vmdot(nnzeros,col_ind,row_ptr,x,tmp);
 
+   #pragma omp parallel for shared(r,z,b,tmp) private(i,j)
    for (i=0;i<ROW;i++){
        for (j=0;j<COL;j++){
            r[COL*i+j] = b[COL*i+j] - tmp[COL*i+j];
@@ -66,7 +67,7 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
        vmdot(nnzeros,col_ind,row_ptr,z,tmp);
        alpha = vvdot(r,r)/vvdot(z,tmp);
 
-
+       #pragma omp parallel for shared(x,z,r_new,r,tmp) private(i,j)
        for (i=0;i<ROW;i++){
            for (j=0;j<COL;j++){
                x[COL*i+j] = x[COL*i+j] + alpha * z[COL*i+j];
@@ -80,6 +81,7 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
           //---------------------------------------
           //   Redistribute x vector to array
           //---------------------------------------
+          #pragma omp parallel for shared(p,x) private(i,j)
           for (i=0;i<ROW;i++)
           {
             for (j=0;j<COL;j++)
@@ -104,6 +106,7 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
        }
 
        beta = vvdot(r_new,r_new)/vvdot(r,r);
+       #pragma omp parallel for shared(z,z_new,r) private(i,j)
        for (i=0;i<ROW;i++){
            for (j=0;j<COL;j++){
                z[COL*i+j] = r_new[COL*i+j] + beta*z[COL*i+j];
@@ -163,6 +166,7 @@ void make_Abx(double *nnzeros, int *col_ind,int *row_ptr,
   //--------------------------------
   //         Make Vector x
   //--------------------------------
+  #pragma omp parallel for shared(x,u) private(i,j)
   for (i=0;i<ROW;i++){
       for (j=0;j<COL;j++){
           x[ROW*i+j] = u[i][j];
@@ -171,6 +175,7 @@ void make_Abx(double *nnzeros, int *col_ind,int *row_ptr,
   //--------------------------------
   //        Make Vector b
   //--------------------------------
+  #pragma omp parallel for shared(b) private(i,j) 
   for (i=0;i<ROW;i++){
       for (j=0;j<COL;j++){
         if (i==0 || i==ROW-1 || j==0 || j==COL-1)
