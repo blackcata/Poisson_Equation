@@ -76,7 +76,7 @@ void Jacobi(double **p,double dx, double dy, double tol,
         //------------------------
         double SUM1_p = 0.0, SUM2_p = 0.0;
 
-        #pragma omp parallel for shared(p_new,p) private(i,j) reduction(+:SUM1_p,SUM2_p) ;
+        #pragma omp parallel for shared(p_new,p) private(i,j) reduction(+:SUM1_p,SUM2_p) 
         for (i=1;i<ROW-1;i++){
             for (j=1;j<COL-1;j++){
                 SUM1_p += fabs(p_new[i][j]);
@@ -84,8 +84,8 @@ void Jacobi(double **p,double dx, double dy, double tol,
                              + pow(beta,2)*(p_new[i][j+1] + p_new[i][j-1])
                              - (2+2*pow(beta,2))*p_new[i][j]-dx*dx*func(i,j,dx,dy));
             }
-            SUM1 += SUM1_p
-            SUM2 += SUM2_p
+            SUM1 += SUM1_p;
+            SUM2 += SUM2_p;
         }
 
         if ( SUM2/SUM1 < tol ){
