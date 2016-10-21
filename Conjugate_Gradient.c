@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
-#include <mkl.h>
+#include "mkl.h"
 
 #include "def.h"
 
@@ -64,7 +64,7 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
     }
     mkl_dcsrmv(transa,&m,&k,alp,matdescra,
                nnzeros,col_ind,r_ptr_b,r_ptr_e,x,bet,tmp);
-    vmdot(nnzeros,col_ind,row_ptr,x,tmp);
+    // vmdot(nnzeros,col_ind,row_ptr,x,tmp);
 
    for (i=0;i<ROW;i++){
        for (j=0;j<COL;j++){
@@ -78,7 +78,9 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
    //---------------------------------------
    for (it=0;it<itmax;it++)
    {
-       vmdot(nnzeros,col_ind,row_ptr,z,tmp);
+       mkl_dcsrmv(transa,&m,&k,alp,matdescra,
+                  nnzeros,col_ind,r_ptr_b,r_ptr_e,x,bet,tmp);
+      //  vmdot(nnzeros,col_ind,row_ptr,z,tmp);
 
        alpha = vvdot(r,r)/vvdot(z,tmp);
 

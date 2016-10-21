@@ -5,7 +5,7 @@ FCFLAGS= -O2 -I${MKL_HOME}/include -L${MKL_HOME}/lib/intel64 -lmkl_intel_lp64 -l
 
 all : $(TARGET)
 $(TARGET) : $(OBJECT)
-	$(IC) -o $@ $^
+	$(IC) $(FCFLAGS) -o $@ $^
 
 .SUFFIXES. : .o .c
 
