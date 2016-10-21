@@ -211,7 +211,7 @@ void vmdot(double *nnzeros, int *col_ind,int *row_ptr,
     for (i=0;i<ROW*COL;i++){
             b[i] = 0;
     }
-
+    #pragma omp parallel for shared(nnzeros,row_ptr,col_ind,x) private(i,j,sum)
     for (i=0;i<ROW*COL;i++){
         sum = 0;
         for (j=row_ptr[i];j<row_ptr[i+1];j++){
@@ -224,11 +224,12 @@ void vmdot(double *nnzeros, int *col_ind,int *row_ptr,
 double vvdot(double *a, double *b)
 {
     int i;
-    double c = 0;
+    double sum = 0;
 
+    #pragma omp parallel for reduction(+:sum)
     for (i=0;i<ROW*COL;i++){
-        c = c + a[i]*b[i];
+        sum = sum + a[i]*b[i];
     }
 
-    return c;
+    return sum;
 }
