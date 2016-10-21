@@ -26,11 +26,12 @@ double func(int i, int j, double dx, double dy);
 void Conjugate_Gradient(double **p,double dx, double dy, double tol,
                                    double *tot_time,int *iter, int BC)
 {
-    int i,j,it,nnz;
-    double alpha,beta ;
+    int i,j,it,nnz, m,k;
+    double alpha,beta, *alp, *bet ;
 
-    int *col_ind, *row_ptr;
+    int *col_ind, *row_ptr, *r_ptr_b, *r_ptr_e;
     double *nnzeros,*tmp,*x,*b,*z,*r,*r_new;
+    char *transa, *matdescra ;
 
     time_t start_t =0, end_t =0;
 
@@ -50,6 +51,19 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
     printf("nnz : %d \n",nnz);
 
     make_Abx(nnzeros,col_ind,row_ptr,b,x,p,nnz,dx,dy);
+    m = ROW;
+    k = COL;
+    *alp = 1.0;
+    *bet = 0.0;
+    transa = "N";
+    matdescra = "G**C";
+    r_ptr_b[0] = 1; r_ptr_b[nnz-1] = row_ptr[nnz-1];
+    for (it=0;it<nnz-2;it++){
+      r_ptr_b[it+1] = row_ptr[it+1];
+      r_ptr_e[it] = row_ptr[it+1];
+    }
+    mkl_dcsrmv(transa,&m,&k,alp,matdescra,
+               nnzeros,col_ind,r_ptr_b,r_ptr_e,x,bet,tmp);
     vmdot(nnzeros,col_ind,row_ptr,x,tmp);
 
    for (i=0;i<ROW;i++){
@@ -65,6 +79,7 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
    for (it=0;it<itmax;it++)
    {
        vmdot(nnzeros,col_ind,row_ptr,z,tmp);
+
        alpha = vvdot(r,r)/vvdot(z,tmp);
 
 
