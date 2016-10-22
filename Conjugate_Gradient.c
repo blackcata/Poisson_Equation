@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
-#include "mkl.h"
+#include <mkl.h>
 
 #include "def.h"
 
@@ -26,11 +26,11 @@ double func(int i, int j, double dx, double dy);
 void Conjugate_Gradient(double **p,double dx, double dy, double tol,
                                    double *tot_time,int *iter, int BC)
 {
-    int i,j,it,nnz, m,k;
-    double alpha,beta, *alp, *bet ;
+    int i,j,it,nnz,m,k;
+    double alpha,beta, alp, bet;
 
     int *col_ind, *row_ptr, *r_ptr_b, *r_ptr_e;
-    double *nnzeros,*tmp,*x,*b,*z,*r,*r_new;
+    double *nnzeros,*tmp,*x,*b,*z,*r,*r_new ;
     char *transa, *matdescra ;
 
     time_t start_t =0, end_t =0;
@@ -40,6 +40,8 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
 
     col_ind  = (int *) malloc(nnz * sizeof(int));
     row_ptr  = (int *) malloc((ROW*COL+1) * sizeof(int));
+    r_ptr_b  = (int *) malloc((ROW*COL) * sizeof(int));
+    r_ptr_e  = (int *) malloc((ROW*COL) * sizeof(int));
 
     nnzeros  = (double *) malloc(nnz * sizeof(double));
     tmp      = (double *) malloc(ROW*COL * sizeof(double));
@@ -53,18 +55,21 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
     make_Abx(nnzeros,col_ind,row_ptr,b,x,p,nnz,dx,dy);
     m = ROW;
     k = COL;
-    *alp = 1.0;
-    *bet = 0.0;
+    alp = 1;
+    bet = 0;
     transa = "N";
     matdescra = "G**C";
-    r_ptr_b[0] = 1; r_ptr_b[nnz-1] = row_ptr[nnz-1];
-    for (it=0;it<nnz-2;it++){
+    printf("m : %d, k : %d, alp : %f, bet : %f\n",m,k,alp,bet );
+    r_ptr_b[0] = 0; r_ptr_e[ROW*COL-1] = row_ptr[ROW*COL];
+    for (it=0;it<ROW*COL;it++){
       r_ptr_b[it+1] = row_ptr[it+1];
-      r_ptr_e[it] = row_ptr[it+1];
+      r_ptr_e[it]   = row_ptr[it+1];
+      printf("it : %d, ptrb : %d, ptre %d, ptr : %d \n",it,r_ptr_b[it],r_ptr_e[it],row_ptr[it]);
     }
-    mkl_dcsrmv(transa,&m,&k,alp,matdescra,
-               nnzeros,col_ind,r_ptr_b,r_ptr_e,x,bet,tmp);
-    // vmdot(nnzeros,col_ind,row_ptr,x,tmp);
+
+    mkl_dcsrmv(transa,&m,&k,&alp,matdescra,
+               nnzeros,col_ind,r_ptr_b,r_ptr_e,x,&bet,tmp);
+    vmdot(nnzeros,col_ind,row_ptr,x,tmp);
 
    for (i=0;i<ROW;i++){
        for (j=0;j<COL;j++){
@@ -76,12 +81,20 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
    //---------------------------------------
    //   Main Loop of Conjugate_Gradient
    //---------------------------------------
-   for (it=0;it<itmax;it++)
+   for (it=0;it<1;it++)
    {
-       mkl_dcsrmv(transa,&m,&k,alp,matdescra,
-                  nnzeros,col_ind,r_ptr_b,r_ptr_e,x,bet,tmp);
-      //  vmdot(nnzeros,col_ind,row_ptr,z,tmp);
+        mkl_dcsrmv(transa,&m,&k,&alp,matdescra,
+                   nnzeros,col_ind,r_ptr_b,r_ptr_e,z,&bet,tmp);
+        for (i=0;i<ROW*COL;i++){
+          printf("%f ",tmp[i]);
+        }
+        printf("\n");
 
+       vmdot(nnzeros,col_ind,row_ptr,z,tmp);
+       for (i=0;i<ROW*COL;i++){
+         printf("%f ",tmp[i]);
+       }
+       printf("\n");
        alpha = vvdot(r,r)/vvdot(z,tmp);
 
 
@@ -97,16 +110,16 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
           //---------------------------------------
           //   Redistribute x vector to array
           //---------------------------------------
-          for (i=0;i<ROW;i++)
-          {
-            for (j=0;j<COL;j++)
-            {
+          for (i=0;i<ROW;i++){
+            for (j=0;j<COL;j++){
               p[i][j] = x[COL*i+j];
             }
           }
 
           free(col_ind);
           free(row_ptr);
+          free(r_ptr_b);
+          free(r_ptr_e);
           free(nnzeros);
           free(tmp);
           free(x);
