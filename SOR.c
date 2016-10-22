@@ -1,8 +1,11 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 #include <math.h>
 #include "def.h"
+
 double func(int i, int j, double dx, double dy);
+void initialization(double **p);
 
 void SOR(double **p,double dx, double dy, double tol, double omega,
                                double *tot_time,int *iter,int BC)

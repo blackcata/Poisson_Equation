@@ -3,6 +3,7 @@
 #include <math.h>
 #include <time.h>
 #include "def.h"
+
 double func(int i, int j, double dx, double dy);
 void initialization(double **p);
 
