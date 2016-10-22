@@ -79,9 +79,8 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
    {
        mkl_dcsrmv("N",&m,&k,&alp,"G**C",nnzeros,
                    col_ind,row_ptr,row_ptr+1,z,&bet,tmp);
-       alpha = vvdot(r,r)/vvdot(z,tmp);
-
-
+       alpha = cblas_ddot(ROW*COL,r,1,r,1)/cblas_ddot(ROW*COL,z,1,tmp,1);
+    
        for (i=0;i<ROW;i++){
            for (j=0;j<COL;j++){
                x[COL*i+j] = x[COL*i+j] + alpha * z[COL*i+j];
@@ -115,7 +114,8 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
           break;
        }
 
-       beta = vvdot(r_new,r_new)/vvdot(r,r);
+       beta = cblas_ddot(ROW*COL,r_new,1,r_new,1)/cblas_ddot(ROW*COL,r,1,r,1);
+
        for (i=0;i<ROW;i++){
            for (j=0;j<COL;j++){
                z[COL*i+j] = r_new[COL*i+j] + beta*z[COL*i+j];
