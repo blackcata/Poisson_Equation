@@ -27,7 +27,7 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
                                    double *tot_time,int *iter, int BC)
 {
     int i,j,it,nnz;
-    double alpha,beta, alp, bet;
+    double alpha, beta, alp, bet;
     MKL_INT m,k;
 
     int *col_ind, *row_ptr, *r_ptr_b, *r_ptr_e;
@@ -51,25 +51,19 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
     z        = (double *) malloc(ROW*COL * sizeof(double));
     r        = (double *) malloc(ROW*COL * sizeof(double));
     r_new    = (double *) malloc(ROW*COL * sizeof(double));
+
     printf("nnz : %d \n",nnz);
 
     make_Abx(nnzeros,col_ind,row_ptr,b,x,p,nnz,dx,dy);
-    m = ROW;
-    k = COL;
+    m = ROW*COL;
+    k = ROW*COL;
     alp = 1.0;
     bet = 0.0;
 
     printf("m : %d, k : %d, alp : %f, bet : %f\n",m,k,alp,bet );
-    r_ptr_b[0] = 0; r_ptr_e[ROW*COL-1] = row_ptr[ROW*COL];
-    for (it=0;it<ROW*COL;it++){
-      r_ptr_b[it+1] = row_ptr[it+1];
-      r_ptr_e[it]   = row_ptr[it+1];
-      printf("it : %d, ptrb : %d, ptre %d, ptr : %d \n",it,r_ptr_b[it],r_ptr_e[it],row_ptr[it]);
-    }
 
-    mkl_dcsrmv("N",&m,&k,&alp,"G**C",
-               nnzeros,col_ind,row_ptr,row_ptr+1,x,&bet,tmp);
-    vmdot(nnzeros,col_ind,row_ptr,x,tmp);
+    mkl_dcsrmv("N",&m,&k,&alp,"G**C",nnzeros,
+                col_ind,row_ptr,row_ptr+1,x,&bet,tmp);
 
    for (i=0;i<ROW;i++){
        for (j=0;j<COL;j++){
@@ -81,20 +75,10 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
    //---------------------------------------
    //   Main Loop of Conjugate_Gradient
    //---------------------------------------
-   for (it=0;it<1;it++)
+   for (it=0;it<itmax;it++)
    {
-        mkl_dcsrmv("N",&m,&k,&alp,"G**C",
-                   nnzeros,col_ind,row_ptr,row_ptr+1,z,&bet,tmp);
-        for (i=0;i<ROW*COL;i++){
-          printf("%f ",tmp[i]);
-        }
-        printf("\n");
-
-       vmdot(nnzeros,col_ind,row_ptr,z,tmp);
-       for (i=0;i<ROW*COL;i++){
-         printf("%f ",tmp[i]);
-       }
-       printf("\n");
+       mkl_dcsrmv("N",&m,&k,&alp,"G**C",nnzeros,
+                   col_ind,row_ptr,row_ptr+1,z,&bet,tmp);
        alpha = vvdot(r,r)/vvdot(z,tmp);
 
 
@@ -118,8 +102,6 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
 
           free(col_ind);
           free(row_ptr);
-          free(r_ptr_b);
-          free(r_ptr_e);
           free(nnzeros);
           free(tmp);
           free(x);
