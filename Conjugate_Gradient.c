@@ -27,16 +27,20 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
                                    double *tot_time,int *iter, int BC)
 {
     int i,j,it,nnz;
-    double alpha, beta, alp, bet;
+    double alpha, beta, alp, bet, diff;
     MKL_INT m,k;
 
     int *col_ind, *row_ptr, *r_ptr_b, *r_ptr_e;
     double *nnzeros,*tmp,*x,*b,*z,*r,*r_new ;
     char *transa, *matdescra ;
+    struct timespec start,end ;
 
-    time_t start_t =0, end_t =0;
+    time_t start_t = 0, end_t = 0;
 
     start_t = clock();
+    clock_gettime(CLOCK_MONOTONIC,&start);
+    // printf("%d \n",clock_gettime(CLOCK_REALTIME,&start) );
+
     nnz = 5*(ROW-2)*(ROW-2) + 2*(ROW-2)*2 + ROW*2;
 
     col_ind  = (int *) malloc(nnz * sizeof(int));
@@ -80,7 +84,7 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
        mkl_dcsrmv("N",&m,&k,&alp,"G**C",nnzeros,
                    col_ind,row_ptr,row_ptr+1,z,&bet,tmp);
        alpha = cblas_ddot(ROW*COL,r,1,r,1)/cblas_ddot(ROW*COL,z,1,tmp,1);
-    
+
        for (i=0;i<ROW;i++){
            for (j=0;j<COL;j++){
                x[COL*i+j] = x[COL*i+j] + alpha * z[COL*i+j];
@@ -110,6 +114,10 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
           free(r_new);
 
           end_t = clock();
+          clock_gettime(CLOCK_MONOTONIC,&end);
+          diff = 1e+9 * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec;
+          printf("elapsed time = %llu nanoseconds\n", (long long unsigned int) diff);
+          
           *tot_time = (double)(end_t - start_t)/(CLOCKS_PER_SEC);
           break;
        }
