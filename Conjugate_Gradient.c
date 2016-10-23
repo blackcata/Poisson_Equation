@@ -91,9 +91,8 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
                r_new[COL*i+j] = r[COL*i+j] - alpha*tmp[COL*i+j];
            }
        }
-//       cblas_dnrm(ROW*COL,r_new,1)
+       
        if (cblas_dnrm2(ROW*COL,r_new,1)< tol){
-       //if (norm_L2(r_new) < tol ){
           *iter = it;
           //---------------------------------------
           //   Redistribute x vector to array
