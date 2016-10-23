@@ -26,14 +26,17 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
                                    double *tot_time,int *iter, int BC)
 {
     int i,j,it,nnz;
-    double alpha,beta ;
+    double alpha,beta,diff;
 
     int *col_ind, *row_ptr;
     double *nnzeros,*tmp,*x,*b,*z,*r,*r_new;
 
     time_t start_t =0, end_t =0;
+    struct timespec start,end ;
 
     start_t = clock();
+    clock_gettime(CLOCK_MONOTONIC,&start);
+
     nnz = 5*(ROW-2)*(ROW-2) + 2*(ROW-2)*2 + ROW*2;
 
     col_ind  = (int *) malloc(nnz * sizeof(int));
@@ -99,6 +102,9 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
           free(r_new);
 
           end_t = clock();
+          clock_gettime(CLOCK_MONOTONIC,&end);
+          diff = 1e+9 * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec;
+          printf("elapsed time = %llu nanoseconds\n", (long long unsigned int) diff);
           *tot_time = (double)(end_t - start_t)/(CLOCKS_PER_SEC);
           break;
        }
