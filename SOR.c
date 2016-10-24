@@ -28,7 +28,6 @@ void SOR(double **p,double dx, double dy, double tol, double omega,
     {
       p_new[i]      = (double *) malloc(COL * sizeof(double));
     }
-    initialization(p_new);
 
     for (it=1;it<itmax;it++){
         SUM1 = 0;
