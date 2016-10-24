@@ -56,6 +56,7 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
     r        = (double *) malloc(ROW*COL * sizeof(double));
     r_new    = (double *) malloc(ROW*COL * sizeof(double));
 
+    mkl_set_num_threads(8);
     printf("nnz : %d \n",nnz);
 
     make_Abx(nnzeros,col_ind,row_ptr,b,x,p,nnz,dx,dy);
