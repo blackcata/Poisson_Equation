@@ -26,7 +26,8 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
 {
     int i,j,k,it,tt;
     int nproc,myrank,ista,iend;
-    double alpha,beta,ts,te, rr_sum,rr_sum_loc,zAz_sum,zAz_sum_loc ;
+    double alpha,beta,ts,te;
+    double rnew_sum,rnew_sum_loc,rr_sum,rr_sum_loc,zAz_sum,zAz_sum_loc ;
 
     double **A;
     double *tmp, *x, *b, *z, *r, *r_new;
@@ -100,18 +101,16 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
        tt = 0;
        for (i=ista;i<iend+1;i++){
            for (j=0;j<COL;j++){
-               x_loc[tt] = x[COL*i+j] + alpha * z[COL*i+j];
-               r_new_loc[tt] = r[COL*i+j] - alpha*tmp_loc[tt];
+               x_loc[tt] = x_loc[tt] + alpha * z_loc[tt];
+               r_new_loc[tt] = r_loc[tt] - alpha*tmp_loc[tt];
                tt+=1;
            }
        }
+       
+       rnew_sum_loc = pow(norm_L2(ROW*COL/nproc,r_new_loc),2);
+       MPI_Allreduce(&rnew_sum_loc,&rnew_sum,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
 
-       MPI_Allgather(&x_loc[0],ROW*COL/nproc,MPI_DOUBLE,
-                     x,ROW*COL/nproc,MPI_DOUBLE,MPI_COMM_WORLD);
-       MPI_Allgather(&r_new_loc[0],ROW*COL/nproc,MPI_DOUBLE,
-                     r_new,ROW*COL/nproc,MPI_DOUBLE,MPI_COMM_WORLD);
-
-       if (norm_L2(ROW*COL,r_new) < tol ){
+       if ( sqrt(rnew_sum) < tol ){
           //---------------------------------------
           //   Redistribute x vector to array
           //---------------------------------------
