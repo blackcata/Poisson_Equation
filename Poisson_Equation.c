@@ -52,6 +52,8 @@ int main(void)
     int i, method, BC;
     double tol, omega;
 
+    int make_fold= system("mkdir RESULT");
+
     // --------------------------------------------------------
     //                    Memory allocation
     // --------------------------------------------------------
@@ -67,7 +69,7 @@ int main(void)
     //--------------------
     //   Initial setting
     //--------------------
-    tol = 1e-4;
+    tol = 1e-6;
     omega = 1.8;
     dir_name = "./RESULT/";
 
