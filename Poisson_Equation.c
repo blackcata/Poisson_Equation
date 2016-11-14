@@ -51,12 +51,12 @@ int main(int argc, char* argv[])
 
     char *dir_name ;
 
-    int i, method, BC;
+    int i, method, BC, myrank;
     double tol, omega;
 
-    int make_fold= system("mkdir RESULT");
-    
     MPI_Init(&argc,&argv);
+    MPI_Comm_rank(MPI_COMM_WORLD,&myrank);
+
     // --------------------------------------------------------
     //                    Memory allocation
     // --------------------------------------------------------
@@ -76,12 +76,15 @@ int main(int argc, char* argv[])
     omega = 1.8;
     dir_name = "./RESULT/";
 
-    printf("\n");
-    printf("---------------------------------------- \n");
-    printf("Nx : %d, Ny : %d\n",ROW,COL);
-    printf("Tolerance : %f, Omega : %f \n",tol, omega);
-    printf("---------------------------------------- \n");
-    printf("\n");
+    if (myrank == 0 ){
+      int make_fold= system("mkdir RESULT");
+      printf("\n");
+      printf("---------------------------------------- \n");
+      printf("Nx : %d, Ny : %d\n",ROW,COL);
+      printf("Tolerance : %f, Omega : %f \n",tol, omega);
+      printf("---------------------------------------- \n");
+      printf("\n");
+    }
 
     //----------------------------------------
     //       Poisson Solver Type
@@ -98,10 +101,11 @@ int main(int argc, char* argv[])
 
 
     poisson_solver(u,u_anal,tol,omega,BC,method,dir_name);
+    MPI_Finalize();
 
     free(u);
     free(u_anal);
 
-    MPI_Finalize();
+
     return 0;
 }
