@@ -88,7 +88,7 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
    //---------------------------------------
    //   Main Loop of Conjugate_Gradient
    //---------------------------------------
-   for (it=0;it<1;it++)
+   for (it=0;it<itmax;it++)
    {
        vmdot(ROW*COL/nproc,ROW*COL,A,z,tmp_loc);
        rr_sum_loc = vvdot(ROW*COL/nproc,r_loc,r_loc);
@@ -135,24 +135,32 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
           free(r);
           free(r_new);
 
+          free(x_loc);
+          free(z_loc);
+          free(tmp_loc);
+          free(r_loc);
+          free(r_new_loc);
+
           end_t = clock();
           te = MPI_Wtime();
           *tot_time = (double)(end_t - start_t)/(CLOCKS_PER_SEC);
           if(myrank==0) printf("Total time is : %f s \n",te-ts );
           break;
        }
+
        rn_sum_loc = vvdot(ROW*COL/nproc,r_new_loc,r_new_loc);
        MPI_Allreduce(&rn_sum_loc,&rn_sum,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
        beta = rn_sum/rr_sum;
 
        tt = 0;
-       for (i=0;i<ROW;i++){
+       for (i=ista;i<iend+1;i++){
            for (j=0;j<COL;j++){
                z_loc[tt] = r_new_loc[tt] + beta*z_loc[tt];
                r_loc[tt] = r_new_loc[tt];
                tt += 1;
            }
        }
+
        MPI_Allgather(&z_loc[0],ROW*COL/nproc,MPI_DOUBLE,
                      z,ROW*COL/nproc,MPI_DOUBLE,MPI_COMM_WORLD);
    }
@@ -233,8 +241,6 @@ void make_Abx(int ista,int iend, double **A, double *b,
             b[ROW*i+j] = 0;//1/(2*pow(pi,2))*func(i,j,dx,dy);
           else
               b[ROW*i+j] = dx*dx*func(i,j,dx,dy);
-
-          // printf(" i:%d, j:%d, b[i][j] : %f\n",i,j,b[ROW*i+j] );
         }
     }
 }
