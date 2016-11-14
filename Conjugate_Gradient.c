@@ -27,7 +27,7 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
     int i,j,k,it,tt;
     int nproc,myrank,ista,iend;
     double alpha,beta,ts,te;
-    double rnew_sum,rnew_sum_loc,rr_sum,rr_sum_loc,zAz_sum,zAz_sum_loc ;
+    double rnew_sum,rnew_sum_loc,rr_sum,rr_sum_loc,rn_sum,rn_sum_loc,zAz_sum,zAz_sum_loc ;
 
     double **A;
     double *tmp, *x, *b, *z, *r, *r_new;
@@ -141,8 +141,10 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
           if(myrank==0) printf("Total time is : %f s \n",te-ts );
           break;
        }
+       rn_sum_loc = vvdot(ROW*COL/nproc,r_new_loc,r_new_loc);
+       MPI_Allreduce(&rn_sum_loc,&rn_sum,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+       beta = rn_sum/rr_sum;
 
-       beta = vvdot(ROW*COL,r_new,r_new)/vvdot(ROW*COL,r,r);
        for (i=0;i<ROW;i++){
            for (j=0;j<COL;j++){
                z[COL*i+j] = r_new[COL*i+j] + beta*z[COL*i+j];
