@@ -26,7 +26,7 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
 {
     int i,j,k,it,tt;
     int nproc,myrank,ista,iend;
-    double alpha,beta,ts,te ;
+    double alpha,beta,ts,te, rr_sum,rr_sum_loc,zAz_sum,zAz_sum_loc ;
 
     double **A;
     double *tmp, *x, *b, *z, *r, *r_new;
@@ -81,58 +81,62 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
                  r,ROW*COL/nproc,MPI_DOUBLE,MPI_COMM_WORLD);
    MPI_Allgather(&z_loc[0],ROW*COL/nproc,MPI_DOUBLE,
                  z,ROW*COL/nproc,MPI_DOUBLE,MPI_COMM_WORLD);
-  //  //---------------------------------------
-  //  //   Main Loop of Conjugate_Gradient
-  //  //---------------------------------------
-  //  for (it=0;it<itmax;it++)
-  //  {
-  //      vmdot(ROW*COL,ROW*COL,A,z,tmp);
-  //      alpha = vvdot(ROW*COL,r,r)/vvdot(ROW*COL,z,tmp);
-   //
-   //
-  //      for (i=0;i<ROW;i++){
-  //          for (j=0;j<COL;j++){
-  //              x[COL*i+j] = x[COL*i+j] + alpha * z[COL*i+j];
-  //              r_new[COL*i+j] = r[COL*i+j] - alpha*tmp[COL*i+j];
-  //          }
-  //      }
-   //
-  //      if (norm_L2(ROW*COL,r_new) < tol ){
-  //         // printf("iteration : %d, tol : %f, value : %f\n",it,tol,norm_L2(r_new) );
-  //         //---------------------------------------
-  //         //   Redistribute x vector to array
-  //         //---------------------------------------
-  //         for (i=0;i<ROW;i++)
-  //         {
-  //           for (j=0;j<COL;j++)
-  //           {
-  //             p[i][j] = x[COL*i+j];
-  //           }
-  //         }
-  //         *iter = it;
-  //         free(A);
-  //         free(tmp);
-  //         free(x);
-  //         free(b);
-  //         free(z);
-  //         free(r);
-  //         free(r_new);
-   //
-  //         end_t = clock();
-  //         te = MPI_Wtime();
-  //         *tot_time = (double)(end_t - start_t)/(CLOCKS_PER_SEC);
-  //         if(myrank==0) printf("Total time is : %f s \n",te-ts );
-  //         break;
-  //      }
-   //
-  //      beta = vvdot(ROW*COL,r_new,r_new)/vvdot(ROW*COL,r,r);
-  //      for (i=0;i<ROW;i++){
-  //          for (j=0;j<COL;j++){
-  //              z[COL*i+j] = r_new[COL*i+j] + beta*z[COL*i+j];
-  //              r[COL*i+j] = r_new[COL*i+j];
-  //          }
-  //      }
-  //  }
+
+   //---------------------------------------
+   //   Main Loop of Conjugate_Gradient
+   //---------------------------------------
+   for (it=0;it<1;it++)
+   {
+       vmdot(ROW*COL/nproc,ROW*COL,A,z,tmp_loc);
+       rr_sum_loc = vvdot(ROW*COL/nproc,r_loc,r_loc);
+       zAz_sum_loc = vvdot(ROW*COL/nproc,z_loc,tmp_loc);
+
+       MPI_Allreduce(&rr_sum_loc,&rr_sum,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+       MPI_Allreduce(&zAz_sum_loc,&zAz_sum,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+       alpha = rr_sum/zAz_sum;
+
+       for (i=0;i<ROW;i++){
+           for (j=0;j<COL;j++){
+               x[COL*i+j] = x[COL*i+j] + alpha * z[COL*i+j];
+               r_new[COL*i+j] = r[COL*i+j] - alpha*tmp[COL*i+j];
+           }
+       }
+
+       if (norm_L2(ROW*COL,r_new) < tol ){
+          //---------------------------------------
+          //   Redistribute x vector to array
+          //---------------------------------------
+          for (i=0;i<ROW;i++)
+          {
+            for (j=0;j<COL;j++)
+            {
+              p[i][j] = x[COL*i+j];
+            }
+          }
+          *iter = it;
+          free(A);
+          free(tmp);
+          free(x);
+          free(b);
+          free(z);
+          free(r);
+          free(r_new);
+
+          end_t = clock();
+          te = MPI_Wtime();
+          *tot_time = (double)(end_t - start_t)/(CLOCKS_PER_SEC);
+          if(myrank==0) printf("Total time is : %f s \n",te-ts );
+          break;
+       }
+
+       beta = vvdot(ROW*COL,r_new,r_new)/vvdot(ROW*COL,r,r);
+       for (i=0;i<ROW;i++){
+           for (j=0;j<COL;j++){
+               z[COL*i+j] = r_new[COL*i+j] + beta*z[COL*i+j];
+               r[COL*i+j] = r_new[COL*i+j];
+           }
+       }
+   }
 
 }
 
@@ -144,18 +148,10 @@ void make_Abx(int ista,int iend, double **A, double *b,
 {
     int i,j,k,l,tmp=0;
 
-    // for (i=0;i<ROW*COL/8;i++){
-    //   for (j=0;j<ROW*COL;j++){
-    //     A[i][j] = 0;
-    //   }
-    // }
-    int rp= 3;
-    int myrank = ista*4/ROW;
     //--------------------------------
     //         Make Matrix A
     //--------------------------------
     for (k=ista;k<iend+1;k++){
-      // if(myrank==rp) printf("myrank : %d, k : %d\n",ista*4/ROW,k);
         for (l=0;l<COL;l++){
             if (k==l){
                 if (k==0 || k==ROW-1){
@@ -200,16 +196,6 @@ void make_Abx(int ista,int iend, double **A, double *b,
         }
         tmp += 1;
     }
-    // for (tmp=0;tmp<16;tmp++){
-    // if (myrank ==rp){
-    // for (i=0;i<ROW*COL;i++)
-    // {
-    //   printf("%f ",A[tmp][i]);
-    // }
-    // printf("\n" );
-    // }
-    // }
-    // if(myrank==rp) printf("\n" );
 
     //--------------------------------
     //         Make Vector x
