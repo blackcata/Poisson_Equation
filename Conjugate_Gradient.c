@@ -24,13 +24,13 @@ double func(int i, int j, double dx, double dy);
 void Conjugate_Gradient(double **p,double dx, double dy, double tol,
                                    double *tot_time,int *iter, int BC)
 {
-    int i,j,k,it;
+    int i,j,k,it,tt;
     int nproc,myrank,ista,iend;
     double alpha,beta,ts,te ;
 
     double **A;
     double *tmp, *x, *b, *z, *r, *r_new;
-    double *tmp_loc, *r_loc;
+    double *tmp_loc, *r_loc, *z_loc;
 
     time_t start_t = 0, end_t = 0;
 
@@ -58,21 +58,29 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
     r_new  = (double *) malloc(ROW*COL * sizeof(double));
 
     r_loc   = (double *) malloc(ROW*COL/nproc * sizeof(double));
+    z_loc   = (double *) malloc(ROW*COL/nproc * sizeof(double));
     tmp_loc = (double *) malloc(ROW*COL/nproc * sizeof(double));
 
     MPI_Barrier(MPI_COMM_WORLD);
     make_Abx(ista,iend,A,b,x,p,dx,dy);
 
     vmdot(ROW*COL/nproc,ROW*COL,A,x,tmp_loc);
+    MPI_Allgather(&tmp_loc[0],ROW*COL/nproc,MPI_DOUBLE,
+                  tmp,ROW*COL/nproc,MPI_DOUBLE,MPI_COMM_WORLD);
 
-   //
-  //  for (i=0;i<ROW;i++){
-  //      for (j=0;j<COL;j++){
-  //          r[COL*i+j] = b[COL*i+j] - tmp[COL*i+j];
-  //          z[COL*i+j] = r[COL*i+j];
-  //      }
-  //  }
+   tt = 0;
+   for (i=ista;i<iend+1;i++){
+       for (j=0;j<COL;j++){
+           r_loc[tt] = b[COL*i+j] - tmp[COL*i+j];
+           z_loc[tt] = r_loc[tt];
+           tt+=1;
+       }
+   }
 
+   MPI_Allgather(&r_loc[0],ROW*COL/nproc,MPI_DOUBLE,
+                 r,ROW*COL/nproc,MPI_DOUBLE,MPI_COMM_WORLD);
+   MPI_Allgather(&z_loc[0],ROW*COL/nproc,MPI_DOUBLE,
+                 z,ROW*COL/nproc,MPI_DOUBLE,MPI_COMM_WORLD);
   //  //---------------------------------------
   //  //   Main Loop of Conjugate_Gradient
   //  //---------------------------------------
