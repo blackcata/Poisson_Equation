@@ -1,4 +1,4 @@
-IC=icc
+IC=mpicc
 TARGET= Poisson_Equation
 OBJECT= Poisson_Equation.o Poisson_Solver.o Jacobi.o SOR.o Conjugate_Gradient.o
 

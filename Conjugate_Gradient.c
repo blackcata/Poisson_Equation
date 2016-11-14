@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
+#include <mpi.h>
+
 #include "def.h"
 
 //-----------------------------------
@@ -23,7 +25,7 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
                                    double *tot_time,int *iter, int BC)
 {
     int i,j,k,it;
-    double alpha,beta ;
+    double alpha,beta,ts,te ;
 
     double **A;
     double *tmp, *x, *b, *z, *r, *r_new;
@@ -31,6 +33,7 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
     time_t start_t =0, end_t =0;
 
     start_t = clock();
+    ts = MPI_Wtime();
 
     A = (double **) malloc(ROW*COL * sizeof(double));
     for (i=0;i<ROW*COL;i++)
@@ -98,7 +101,9 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
           free(r_new);
 
           end_t = clock();
+          te = MPI_Wtime();
           *tot_time = (double)(end_t - start_t)/(CLOCKS_PER_SEC);
+          printf("Total time is : %f s \n",te-ts );
           break;
        }
 

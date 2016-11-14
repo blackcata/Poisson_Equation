@@ -33,6 +33,8 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
+#include <mpi.h>
+
 #include "def.h"
 
 //-----------------------------------
@@ -42,7 +44,7 @@
 void poisson_solver(double **u, double **u_anal, double tol, double omega,
                     int BC, int method, char *dir_name);
 
-int main(void)
+int main(int argc, char* argv[])
 {
     double **u;
     double **u_anal;
@@ -53,7 +55,8 @@ int main(void)
     double tol, omega;
 
     int make_fold= system("mkdir RESULT");
-
+    
+    MPI_Init(&argc,&argv);
     // --------------------------------------------------------
     //                    Memory allocation
     // --------------------------------------------------------
@@ -93,10 +96,12 @@ int main(void)
     BC = 1;
     method = 3;
 
+
     poisson_solver(u,u_anal,tol,omega,BC,method,dir_name);
 
     free(u);
     free(u_anal);
 
+    MPI_Finalize();
     return 0;
 }

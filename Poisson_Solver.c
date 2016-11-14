@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <math.h>
+#include <mpi.h>
 
-#include <string.h>
 #include "def.h"
 
 void initialization(double **p);
@@ -28,12 +28,13 @@ void poisson_solver(double **u, double **u_anal, double tol, double omega,
 
   char *file_name ;
 
-  int iter = 0;
+  int iter = 0, myrank;
   double Lx = 1.0, Ly = 1.0;
   double dx, dy, err = 0, tot_time = 0;
 
   dx = Lx/(ROW-1);
   dy = Ly/(COL-1);
+  MPI_Comm_rank(MPI_COMM_WORLD,&myrank);
 
   //-----------------------------
   //      Analytic Solutions
@@ -50,10 +51,12 @@ void poisson_solver(double **u, double **u_anal, double tol, double omega,
       initialization(u);
       Jacobi(u,dx,dy,tol,&tot_time,&iter,BC);
       error_rms(u,u_anal,&err);
-      printf("Jacobi Method - Error : %e, Iteration : %d, Time : %f s \n",err,iter,tot_time);
 
       file_name = "Jacobi_result.plt";
-      write_u(dir_name,file_name,u,dx,dy);
+      if(myrank==0) {
+        printf("Jacobi Method - Error : %e, Iteration : %d, Time : %f s \n",err,iter,tot_time);
+        write_u(dir_name,file_name,u,dx,dy);
+      }
       break;
 
     case 2 :
@@ -63,10 +66,12 @@ void poisson_solver(double **u, double **u_anal, double tol, double omega,
        initialization(u);
        SOR(u,dx,dy,tol,omega,&tot_time,&iter,BC);
        error_rms(u,u_anal,&err);
-       printf("SOR Method - Error : %e, Iteration : %d, Time : %f s \n",err,iter,tot_time);
 
        file_name = "SOR_result.plt";
-       write_u(dir_name,file_name,u,dx,dy);
+       if(myrank==0) {
+         printf("SOR Method - Error : %e, Iteration : %d, Time : %f s \n",err,iter,tot_time);
+         write_u(dir_name,file_name,u,dx,dy);
+       }
       break;
 
     case 3 :
@@ -76,11 +81,13 @@ void poisson_solver(double **u, double **u_anal, double tol, double omega,
        initialization(u);
        Conjugate_Gradient(u,dx,dy,tol,&tot_time,&iter,BC);
        error_rms(u,u_anal,&err);
-       printf("CG method - Error : %e, Iteration : %d, Time : %f s \n",err,iter,tot_time);
 
        file_name = "CG_result.plt";
-       write_u(dir_name,file_name,u,dx,dy);
-      break;
+       if(myrank==0){
+         printf("CG method - Error : %e, Iteration : %d, Time : %f s \n",err,iter,tot_time);
+         write_u(dir_name,file_name,u,dx,dy);
+       }
+       break;
   }
 
 }
@@ -104,7 +111,7 @@ void error_rms(double **p, double **p_anal, double *err)
   int i,j;
   for (i=0;i<ROW;i++){
     for (j=0;j<COL;j++){
-      *err = *err + pow(p[i][j] -p_anal[i][j],2);
+      *err = *err + pow(p[i][j] - p_anal[i][j],2);
     }
   }
 
@@ -131,6 +138,8 @@ void write_u(char *dir_nm,char *file_nm, double **p,double dx, double dy)
     fprintf(stream,"ZONE I=%d J=%d \n",ROW,COL);
     for (i=0;i<ROW;i++){
         for(j=0;j<COL;j++){
-            fprintf(stream,"%f %f %f \n",i*dx,j*dy,p[i][j]); }}
+            fprintf(stream,"%f %f %f \n",i*dx,j*dy,p[i][j]);
+        }
+    }
     fclose(stream);
 }

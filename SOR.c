@@ -1,7 +1,10 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 #include <math.h>
+
 #include "def.h"
+
 double func(int i, int j, double dx, double dy);
 
 void SOR(double **p,double dx, double dy, double tol, double omega,
@@ -21,7 +24,6 @@ void SOR(double **p,double dx, double dy, double tol, double omega,
     {
       p_new[i]      = (double *) malloc(COL * sizeof(double));
     }
-    initialization(p_new);
 
     for (it=1;it<itmax;it++){
         SUM1 = 0;
