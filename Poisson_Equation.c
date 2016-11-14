@@ -85,6 +85,7 @@ int main(int argc, char* argv[])
       printf("---------------------------------------- \n");
       printf("\n");
     }
+    MPI_Barrier(MPI_COMM_WORLD);
 
     //----------------------------------------
     //       Poisson Solver Type

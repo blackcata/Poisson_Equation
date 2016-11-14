@@ -83,6 +83,8 @@ void poisson_solver(double **u, double **u_anal, double tol, double omega,
        error_rms(u,u_anal,&err);
 
        file_name = "CG_result.plt";
+       
+       MPI_Barrier(MPI_COMM_WORLD);
        if(myrank==0){
          printf("CG method - Error : %e, Iteration : %d, Time : %f s \n",err,iter,tot_time);
          write_u(dir_name,file_name,u,dx,dy);
