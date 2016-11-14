@@ -24,21 +24,28 @@ double func(int i, int j, double dx, double dy);
 void Conjugate_Gradient(double **p,double dx, double dy, double tol,
                                    double *tot_time,int *iter, int BC)
 {
-    int i,j,k,it,myrank;
+    int i,j,k,it;
+    int nproc,myrank,ista,iend;
     double alpha,beta,ts,te ;
 
-    double **A;
+    double **A,**A_tmp;
     double *tmp, *x, *b, *z, *r, *r_new;
 
-    time_t start_t =0, end_t =0;
+    time_t start_t = 0, end_t = 0;
 
     start_t = clock();
     ts = MPI_Wtime();
+
+    MPI_Comm_size(MPI_COMM_WORLD,&nproc);
     MPI_Comm_rank(MPI_COMM_WORLD,&myrank);
+    printf("ROW X COL : %d, nproc : %d \n",ROW*COL,ROW*COL/nproc);
+    
+    ista = myrank*(ROW*COL/nproc);
+    iend = (myrank+1)*(ROW*COL/nproc) - 1;
+    printf("[ista,iend] : [%d,%d]\n \n",ista,iend );
 
     A = (double **) malloc(ROW*COL * sizeof(double));
-    for (i=0;i<ROW*COL;i++)
-    {
+    for (i=0;i<ROW*COL;i++) {
       A[i] = (double *) malloc(ROW*COL * sizeof(double));
     }
     tmp    = (double *) malloc(ROW*COL * sizeof(double));
@@ -47,12 +54,6 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
     z      = (double *) malloc(ROW*COL * sizeof(double));
     r      = (double *) malloc(ROW*COL * sizeof(double));
     r_new  = (double *) malloc(ROW*COL * sizeof(double));
-
-    // for (i=0;i<ROW*COL;i++){
-    //     for (j=0;j<ROW*COL;j++){
-    //         A[i][j] = 0;
-    //     }
-    // }
 
     make_Abx(A,b,x,p,dx,dy);
     vmdot(ROW*COL,ROW*COL,A,x,tmp);
