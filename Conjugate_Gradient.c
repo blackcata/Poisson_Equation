@@ -3,6 +3,7 @@
 #include <time.h>
 #include <math.h>
 #include <mkl.h>
+#include <omp.h>
 
 #include "def.h"
 
@@ -56,7 +57,6 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
     r        = (double *) malloc(ROW*COL * sizeof(double));
     r_new    = (double *) malloc(ROW*COL * sizeof(double));
 
-    mkl_set_num_threads(8);
     printf("nnz : %d \n",nnz);
 
     make_Abx(nnzeros,col_ind,row_ptr,b,x,p,nnz,dx,dy);
@@ -92,7 +92,7 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
                r_new[COL*i+j] = r[COL*i+j] - alpha*tmp[COL*i+j];
            }
        }
-       
+
        if (cblas_dnrm2(ROW*COL,r_new,1)< tol){
           *iter = it;
           //---------------------------------------
@@ -118,7 +118,7 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
           clock_gettime(CLOCK_MONOTONIC,&end);
           diff = 1e+9 * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec;
           printf("elapsed time = %llu nanoseconds\n", (long long unsigned int) diff);
-          
+
           *tot_time = (double)(end_t - start_t)/(CLOCKS_PER_SEC);
           break;
        }
