@@ -30,7 +30,7 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
 
     double **A;
     double *tmp, *x, *b, *z, *r, *r_new;
-    double *tmp_loc, *r_loc, *z_loc;
+    double *tmp_loc, *r_loc, *r_new_loc, *x_loc, *z_loc;
 
     time_t start_t = 0, end_t = 0;
 
@@ -57,9 +57,11 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
     r      = (double *) malloc(ROW*COL * sizeof(double));
     r_new  = (double *) malloc(ROW*COL * sizeof(double));
 
-    r_loc   = (double *) malloc(ROW*COL/nproc * sizeof(double));
-    z_loc   = (double *) malloc(ROW*COL/nproc * sizeof(double));
-    tmp_loc = (double *) malloc(ROW*COL/nproc * sizeof(double));
+    x_loc       = (double *) malloc(ROW*COL/nproc * sizeof(double));
+    z_loc       = (double *) malloc(ROW*COL/nproc * sizeof(double));
+    tmp_loc     = (double *) malloc(ROW*COL/nproc * sizeof(double));
+    r_loc       = (double *) malloc(ROW*COL/nproc * sizeof(double));
+    r_new_loc   = (double *) malloc(ROW*COL/nproc * sizeof(double));
 
     MPI_Barrier(MPI_COMM_WORLD);
     make_Abx(ista,iend,A,b,x,p,dx,dy);
@@ -95,12 +97,19 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
        MPI_Allreduce(&zAz_sum_loc,&zAz_sum,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
        alpha = rr_sum/zAz_sum;
 
-       for (i=0;i<ROW;i++){
+       tt = 0;
+       for (i=ista;i<iend+1;i++){
            for (j=0;j<COL;j++){
-               x[COL*i+j] = x[COL*i+j] + alpha * z[COL*i+j];
-               r_new[COL*i+j] = r[COL*i+j] - alpha*tmp[COL*i+j];
+               x_loc[tt] = x[COL*i+j] + alpha * z[COL*i+j];
+               r_new_loc[tt] = r[COL*i+j] - alpha*tmp_loc[tt];
+               tt+=1;
            }
        }
+
+       MPI_Allgather(&x_loc[0],ROW*COL/nproc,MPI_DOUBLE,
+                     x,ROW*COL/nproc,MPI_DOUBLE,MPI_COMM_WORLD);
+       MPI_Allgather(&r_new_loc[0],ROW*COL/nproc,MPI_DOUBLE,
+                     r_new,ROW*COL/nproc,MPI_DOUBLE,MPI_COMM_WORLD);
 
        if (norm_L2(ROW*COL,r_new) < tol ){
           //---------------------------------------
