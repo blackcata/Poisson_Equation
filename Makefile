@@ -2,14 +2,17 @@ IC=mpicc
 TARGET= Poisson_Equation
 OBJECT= Poisson_Equation.o Poisson_Solver.o Jacobi.o SOR.o Conjugate_Gradient.o
 
+FCFLAGS= -O2 -lm
+LDFLAGS= 
+
 all : $(TARGET)
 $(TARGET) : $(OBJECT)
-	$(IC) -o $@ $^
+	$(IC) $(FCFLAGS) -o $@ $^ $(LDFLAGS)
 
 .SUFFIXES. : .o .c
 
 %.o : %.c
-	$(IC) -c $<
+	$(IC) $(FCFLAGS) -c $< $(LDFLAGS)
 
 clean :
 	rm -f *.o
