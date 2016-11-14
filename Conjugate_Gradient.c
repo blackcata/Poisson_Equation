@@ -145,12 +145,16 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
        MPI_Allreduce(&rn_sum_loc,&rn_sum,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
        beta = rn_sum/rr_sum;
 
+       tt = 0;
        for (i=0;i<ROW;i++){
            for (j=0;j<COL;j++){
-               z[COL*i+j] = r_new[COL*i+j] + beta*z[COL*i+j];
-               r[COL*i+j] = r_new[COL*i+j];
+               z_loc[tt] = r_new_loc[tt] + beta*z_loc[tt];
+               r_loc[tt] = r_new_loc[tt];
+               tt += 1;
            }
        }
+       MPI_Allgather(&z_loc[0],ROW*COL/nproc,MPI_DOUBLE,
+                     z,ROW*COL/nproc,MPI_DOUBLE,MPI_COMM_WORLD);
    }
 
 }
