@@ -7,9 +7,9 @@
 //-----------------------------------
 //      Matrix Calculations
 //-----------------------------------
-double norm_L2(double *a);
-double vvdot(double *a, double *b);
-void vmdot(double **A,double *x,double *b);
+double norm_L2(int num, double *a);
+double vvdot(int num, double *a, double *b);
+void vmdot(int row,int col,double **A,double *x,double *b);
 
 void make_Abx(double **A, double *b, double *x, double**u
               ,double dx, double dy);
@@ -51,7 +51,7 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
     // }
 
     make_Abx(A,b,x,p,dx,dy);
-    vmdot(A,x,tmp);
+    vmdot(ROW*COL,ROW*COL,A,x,tmp);
 
    for (i=0;i<ROW;i++){
        for (j=0;j<COL;j++){
@@ -65,8 +65,8 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
    //---------------------------------------
    for (it=0;it<itmax;it++)
    {
-       vmdot(A,z,tmp);
-       alpha = vvdot(r,r)/vvdot(z,tmp);
+       vmdot(ROW*COL,ROW*COL,A,z,tmp);
+       alpha = vvdot(ROW*COL,r,r)/vvdot(ROW*COL,z,tmp);
 
 
        for (i=0;i<ROW;i++){
@@ -76,7 +76,7 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
            }
        }
 
-       if (norm_L2(r_new) < tol ){
+       if (norm_L2(ROW*COL,r_new) < tol ){
           // printf("iteration : %d, tol : %f, value : %f\n",it,tol,norm_L2(r_new) );
           //---------------------------------------
           //   Redistribute x vector to array
@@ -102,7 +102,7 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
           break;
        }
 
-       beta = vvdot(r_new,r_new)/vvdot(r,r);
+       beta = vvdot(ROW*COL,r_new,r_new)/vvdot(ROW*COL,r,r);
        for (i=0;i<ROW;i++){
            for (j=0;j<COL;j++){
                z[COL*i+j] = r_new[COL*i+j] + beta*z[COL*i+j];
@@ -203,39 +203,39 @@ void make_Abx(double **A,double *b,double *x,
 //------------------------------------------------------------
 //              Matrix Calcuation Functions
 //------------------------------------------------------------
-double norm_L2(double *a)
+double norm_L2(int num, double *a)
 {
     int i;
     double sum = 0;
 
-    for (i=0;i<ROW*COL;i++){
+    for (i=0;i<num;i++){
         sum = sum + pow(a[i],2);
     }
     return sqrt(sum);
 }
 
-void vmdot(double **A,double *x,double *b)
+void vmdot(int row,int col,double **A,double *x,double *b)
 {
     int i,j;
 
-    for (i=0;i<ROW*COL;i++){
+    for (i=0;i<row;i++){
             b[i] = 0;
     }
 
-    for (i=0;i<ROW*COL;i++){
-        for (j=0;j<ROW*COL;j++){
+    for (i=0;i<row;i++){
+        for (j=0;j<col;j++){
             b[i] = b[i] + A[i][j]*x[j];
         }
 
     }
 }
 
-double vvdot(double *a, double *b)
+double vvdot(int num, double *a, double *b)
 {
     int i;
     double c = 0;
 
-    for (i=0;i<ROW*COL;i++){
+    for (i=0;i<num;i++){
         c = c + a[i]*b[i];
     }
 
