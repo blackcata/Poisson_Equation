@@ -57,9 +57,14 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
     r      = (double *) malloc(ROW*COL * sizeof(double));
     r_new  = (double *) malloc(ROW*COL * sizeof(double));
 
+    r_loc   = (double *) malloc(ROW*COL/nproc * sizeof(double));
+    tmp_loc = (double *) malloc(ROW*COL/nproc * sizeof(double));
+
     MPI_Barrier(MPI_COMM_WORLD);
     make_Abx(ista,iend,A,b,x,p,dx,dy);
-  //   vmdot(ROW*COL,ROW*COL,A,x,tmp);
+
+    vmdot(ROW*COL/nproc,ROW*COL,A,x,tmp_loc);
+
    //
   //  for (i=0;i<ROW;i++){
   //      for (j=0;j<COL;j++){
@@ -142,7 +147,7 @@ void make_Abx(int ista,int iend, double **A, double *b,
     //         Make Matrix A
     //--------------------------------
     for (k=ista;k<iend+1;k++){
-      if(myrank==rp) printf("myrank : %d, k : %d\n",ista*4/ROW,k);
+      // if(myrank==rp) printf("myrank : %d, k : %d\n",ista*4/ROW,k);
         for (l=0;l<COL;l++){
             if (k==l){
                 if (k==0 || k==ROW-1){
@@ -187,16 +192,16 @@ void make_Abx(int ista,int iend, double **A, double *b,
         }
         tmp += 1;
     }
-    for (tmp=0;tmp<16;tmp++){
-    if (myrank ==rp){
-    for (i=0;i<ROW*COL;i++)
-    {
-      printf("%f ",A[tmp][i]);
-    }
-    printf("\n" );
-    }
-    }
-    if(myrank==rp) printf("\n" );
+    // for (tmp=0;tmp<16;tmp++){
+    // if (myrank ==rp){
+    // for (i=0;i<ROW*COL;i++)
+    // {
+    //   printf("%f ",A[tmp][i]);
+    // }
+    // printf("\n" );
+    // }
+    // }
+    // if(myrank==rp) printf("\n" );
 
     //--------------------------------
     //         Make Vector x
