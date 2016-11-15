@@ -109,16 +109,16 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
 
        rnew_sum_loc = pow(norm_L2(ROW*COL/nproc,r_new_loc),2);
        MPI_Allreduce(&rnew_sum_loc,&rnew_sum,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
-       MPI_Allgather(&x_loc[0],ROW*COL/nproc,MPI_DOUBLE,
-                   x,ROW*COL/nproc,MPI_DOUBLE,MPI_COMM_WORLD);
 
        if ( sqrt(rnew_sum) < tol ){
           //---------------------------------------
           //   Redistribute x vector to array
           //---------------------------------------
+          MPI_Allgather(&x_loc[0],ROW*COL/nproc,MPI_DOUBLE,
+                      x,ROW*COL/nproc,MPI_DOUBLE,MPI_COMM_WORLD);
           if (myrank == 0){
             tt = 0;
-            for (i=ista;i<iend+1;i++){
+            for (i=0;i<ROW;i++){
               for (j=0;j<COL;j++){
                 p[i][j] = x[tt];
                 tt += 1;
