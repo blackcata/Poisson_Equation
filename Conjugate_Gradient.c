@@ -11,7 +11,8 @@
 //-----------------------------------
 double norm_L2(int num, double *a);
 double vvdot(int num, double *a, double *b);
-void vmdot(int row,int col,double **A,double *x,double *b);
+void vmdot(int myrank, int nproc,int row,int col,
+           double **L, double **A, double **R,double *x,double *b);
 
 void make_Abx(int ista,int iend,double **A,double **L,double **R,
               double *b,double *x,double**u,double dx,double dy);
@@ -71,7 +72,7 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
     MPI_Barrier(MPI_COMM_WORLD);
     make_Abx(ista,iend,A,L,R,b,x,p,dx,dy);
 
-  //   vmdot(ROW*COL/nproc,ROW*COL,A,x,tmp_loc);
+    vmdot(myrank,nproc,ROW*COL/nproc,ROW*COL/nproc,L,A,R,x,tmp_loc);
   //   MPI_Allgather(&tmp_loc[0],ROW*COL/nproc,MPI_DOUBLE,
   //                 tmp,ROW*COL/nproc,MPI_DOUBLE,MPI_COMM_WORLD);
    //
@@ -260,19 +261,72 @@ double norm_L2(int num, double *a)
     return sqrt(sum);
 }
 
-void vmdot(int row,int col,double **A,double *x,double *b)
+void vmdot(int myrank, int nproc,int row,int col,
+           double **L, double **A, double **R,double *x,double *b)
 {
     int i,j;
+    double *send_l, *recv_l,*send_r, *recv_r;
+    double *b_l, *b_c, *b_r;
+    MPI_Request req1, req2, req3, req4;
+    MPI_Status stat1, stat2, stat3, stat4;
+
+    send_l = (double *) malloc(row * sizeof(double));
+    recv_l = (double *) malloc(row * sizeof(double));
+    send_r = (double *) malloc(row * sizeof(double));
+    recv_r = (double *) malloc(row * sizeof(double));
+
+    b_l = (double *) malloc(row * sizeof(double));
+    b_c = (double *) malloc(row * sizeof(double));
+    b_r = (double *) malloc(row * sizeof(double));
+
+    // Left exchange
+    if (myrank!=0)
+      MPI_Irecv(recv_l,row,MPI_DOUBLE,myrank-1,101,MPI_COMM_WORLD,&req1);
+    if (myrank!=nproc-1)
+      MPI_Isend(x,row,MPI_DOUBLE,myrank+1,102,MPI_COMM_WORLD,&req2);
+    // Right exchange
+    if (myrank!=nproc-1)
+      MPI_Irecv(recv_r,row,MPI_DOUBLE,myrank+1,101,MPI_COMM_WORLD,&req3);
+    if (myrank!=0)
+      MPI_Isend(x,row,MPI_DOUBLE,myrank-1,102,MPI_COMM_WORLD,&req4);
 
     for (i=0;i<row;i++){
-            b[i] = 0;
+        b_l[i] = 0;
+        b_c[i] = 0;
+        b_r[i] = 0;
     }
 
+    // Center calculation
     for (i=0;i<row;i++){
         for (j=0;j<col;j++){
-            b[i] = b[i] + A[i][j]*x[j];
+            b_c[i] = b_c[i] + A[i][j]*x[j];
         }
     }
+
+    // Left calculation
+    MPI_Wait(&req1,&stat1);
+    MPI_Wait(&req2,&stat2);
+
+    for (i=0;i<row;i++){
+      for (j=0;j<row;j++){
+        b_l[i] = b_l[i] + L[i][j]*recv_l[i];
+      }
+    }
+
+    // Left calculation
+    MPI_Wait(&req3,&stat3);
+    MPI_Wait(&req4,&stat4);
+
+    for (i=0;i<row;i++){
+      for (j=0;j<row;j++){
+        b_r[i] = b_r[i] + R[i][j]*recv_r[i];
+      }
+    }
+
+    for (i=0;i<row;i++){
+      b[i] = b_l[i] + b_c[i] + b_r[i];
+    }
+
 }
 
 double vvdot(int num, double *a, double *b)
