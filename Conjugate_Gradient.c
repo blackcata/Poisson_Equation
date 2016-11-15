@@ -13,8 +13,8 @@ double norm_L2(int num, double *a);
 double vvdot(int num, double *a, double *b);
 void vmdot(int row,int col,double **A,double *x,double *b);
 
-void make_Abx(int ista,int iend, double **A, double *b,
-                double *x, double**u,double dx, double dy);
+void make_Abx(int ista,int iend,double **A,double **L,double **R,
+              double *b,double *x,double**u,double dx,double dy);
 
 //-----------------------------------
 //      Mathematical functions
@@ -29,7 +29,7 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
     double alpha,beta,ts,te;
     double rnew_sum,rnew_sum_loc,rr_sum,rr_sum_loc,rn_sum,rn_sum_loc,zAz_sum,zAz_sum_loc ;
 
-    double **A;
+    double **A, **L, **R;
     double *tmp, *x, *b, *z, *r, *r_new;
     double *tmp_loc, *r_loc, *r_new_loc, *x_loc, *z_loc;
 
@@ -47,8 +47,12 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
     printf("[ista,iend] : [%d,%d]\n \n",ista,iend );
 
     A = (double **) malloc(ROW*COL/nproc * sizeof(double));
+    L = (double **) malloc(ROW*COL/nproc * sizeof(double));
+    R = (double **) malloc(ROW*COL/nproc * sizeof(double));
     for (i=0;i<ROW*COL/nproc;i++) {
-      A[i] = (double *) malloc(ROW*COL * sizeof(double));
+      A[i] = (double *) malloc(ROW*COL/nproc * sizeof(double));
+      L[i] = (double *) malloc(ROW*COL/nproc * sizeof(double));
+      R[i] = (double *) malloc(ROW*COL/nproc * sizeof(double));
     }
 
     tmp    = (double *) malloc(ROW*COL * sizeof(double));
@@ -65,113 +69,113 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
     r_new_loc   = (double *) malloc(ROW*COL/nproc * sizeof(double));
 
     MPI_Barrier(MPI_COMM_WORLD);
-    make_Abx(ista,iend,A,b,x,p,dx,dy);
+    make_Abx(ista,iend,A,L,R,b,x,p,dx,dy);
 
-    vmdot(ROW*COL/nproc,ROW*COL,A,x,tmp_loc);
-    MPI_Allgather(&tmp_loc[0],ROW*COL/nproc,MPI_DOUBLE,
-                  tmp,ROW*COL/nproc,MPI_DOUBLE,MPI_COMM_WORLD);
+  //   vmdot(ROW*COL/nproc,ROW*COL,A,x,tmp_loc);
+  //   MPI_Allgather(&tmp_loc[0],ROW*COL/nproc,MPI_DOUBLE,
+  //                 tmp,ROW*COL/nproc,MPI_DOUBLE,MPI_COMM_WORLD);
+   //
+  //  tt = 0;
+  //  for (i=ista;i<iend+1;i++){
+  //      for (j=0;j<COL;j++){
+  //          r_loc[tt] = b[COL*i+j] - tmp[COL*i+j];
+  //          z_loc[tt] = r_loc[tt];
+  //          tt+=1;
+  //      }
+  //  }
+   //
+  //  MPI_Allgather(&r_loc[0],ROW*COL/nproc,MPI_DOUBLE,
+  //                r,ROW*COL/nproc,MPI_DOUBLE,MPI_COMM_WORLD);
+  //  MPI_Allgather(&z_loc[0],ROW*COL/nproc,MPI_DOUBLE,
+  //                z,ROW*COL/nproc,MPI_DOUBLE,MPI_COMM_WORLD);
 
-   tt = 0;
-   for (i=ista;i<iend+1;i++){
-       for (j=0;j<COL;j++){
-           r_loc[tt] = b[COL*i+j] - tmp[COL*i+j];
-           z_loc[tt] = r_loc[tt];
-           tt+=1;
-       }
-   }
-
-   MPI_Allgather(&r_loc[0],ROW*COL/nproc,MPI_DOUBLE,
-                 r,ROW*COL/nproc,MPI_DOUBLE,MPI_COMM_WORLD);
-   MPI_Allgather(&z_loc[0],ROW*COL/nproc,MPI_DOUBLE,
-                 z,ROW*COL/nproc,MPI_DOUBLE,MPI_COMM_WORLD);
-
-   //---------------------------------------
-   //   Main Loop of Conjugate_Gradient
-   //---------------------------------------
-   for (it=0;it<itmax;it++)
-   {
-       vmdot(ROW*COL/nproc,ROW*COL,A,z,tmp_loc);
-       rr_sum_loc = vvdot(ROW*COL/nproc,r_loc,r_loc);
-       zAz_sum_loc = vvdot(ROW*COL/nproc,z_loc,tmp_loc);
-
-       MPI_Allreduce(&rr_sum_loc,&rr_sum,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
-       MPI_Allreduce(&zAz_sum_loc,&zAz_sum,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
-       alpha = rr_sum/zAz_sum;
-
-       tt = 0;
-       for (i=ista;i<iend+1;i++){
-           for (j=0;j<COL;j++){
-               x_loc[tt] = x_loc[tt] + alpha * z_loc[tt];
-               r_new_loc[tt] = r_loc[tt] - alpha*tmp_loc[tt];
-               tt+=1;
-           }
-       }
-
-       rnew_sum_loc = pow(norm_L2(ROW*COL/nproc,r_new_loc),2);
-       MPI_Allreduce(&rnew_sum_loc,&rnew_sum,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
-
-       if ( sqrt(rnew_sum) < tol ){
-          //---------------------------------------
-          //   Redistribute x vector to array
-          //---------------------------------------
-          MPI_Allgather(&x_loc[0],ROW*COL/nproc,MPI_DOUBLE,
-                      x,ROW*COL/nproc,MPI_DOUBLE,MPI_COMM_WORLD);
-          if (myrank == 0){
-            tt = 0;
-            for (i=0;i<ROW;i++){
-              for (j=0;j<COL;j++){
-                p[i][j] = x[tt];
-                tt += 1;
-              }
-            }
-          }
-
-          *iter = it;
-          free(A);
-          free(tmp);
-          free(x);
-          free(b);
-          free(z);
-          free(r);
-          free(r_new);
-
-          free(x_loc);
-          free(z_loc);
-          free(tmp_loc);
-          free(r_loc);
-          free(r_new_loc);
-
-          end_t = clock();
-          te = MPI_Wtime();
-          *tot_time = (double)(end_t - start_t)/(CLOCKS_PER_SEC);
-          if(myrank==0) printf("Total time is : %f s \n",te-ts );
-          break;
-       }
-
-       rn_sum_loc = vvdot(ROW*COL/nproc,r_new_loc,r_new_loc);
-       MPI_Allreduce(&rn_sum_loc,&rn_sum,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
-       beta = rn_sum/rr_sum;
-
-       tt = 0;
-       for (i=ista;i<iend+1;i++){
-           for (j=0;j<COL;j++){
-               z_loc[tt] = r_new_loc[tt] + beta*z_loc[tt];
-               r_loc[tt] = r_new_loc[tt];
-               tt += 1;
-           }
-       }
-
-       MPI_Allgather(&z_loc[0],ROW*COL/nproc,MPI_DOUBLE,
-                     z,ROW*COL/nproc,MPI_DOUBLE,MPI_COMM_WORLD);
-   }
+  //  //---------------------------------------
+  //  //   Main Loop of Conjugate_Gradient
+  //  //---------------------------------------
+  //  for (it=0;it<itmax;it++)
+  //  {
+  //      vmdot(ROW*COL/nproc,ROW*COL,A,z,tmp_loc);
+  //      rr_sum_loc = vvdot(ROW*COL/nproc,r_loc,r_loc);
+  //      zAz_sum_loc = vvdot(ROW*COL/nproc,z_loc,tmp_loc);
+   //
+  //      MPI_Allreduce(&rr_sum_loc,&rr_sum,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+  //      MPI_Allreduce(&zAz_sum_loc,&zAz_sum,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+  //      alpha = rr_sum/zAz_sum;
+   //
+  //      tt = 0;
+  //      for (i=ista;i<iend+1;i++){
+  //          for (j=0;j<COL;j++){
+  //              x_loc[tt] = x_loc[tt] + alpha * z_loc[tt];
+  //              r_new_loc[tt] = r_loc[tt] - alpha*tmp_loc[tt];
+  //              tt+=1;
+  //          }
+  //      }
+   //
+  //      rnew_sum_loc = pow(norm_L2(ROW*COL/nproc,r_new_loc),2);
+  //      MPI_Allreduce(&rnew_sum_loc,&rnew_sum,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+   //
+  //      if ( sqrt(rnew_sum) < tol ){
+  //         //---------------------------------------
+  //         //   Redistribute x vector to array
+  //         //---------------------------------------
+  //         MPI_Allgather(&x_loc[0],ROW*COL/nproc,MPI_DOUBLE,
+  //                     x,ROW*COL/nproc,MPI_DOUBLE,MPI_COMM_WORLD);
+  //         if (myrank == 0){
+  //           tt = 0;
+  //           for (i=0;i<ROW;i++){
+  //             for (j=0;j<COL;j++){
+  //               p[i][j] = x[tt];
+  //               tt += 1;
+  //             }
+  //           }
+  //         }
+   //
+  //         *iter = it;
+  //         free(A);
+  //         free(tmp);
+  //         free(x);
+  //         free(b);
+  //         free(z);
+  //         free(r);
+  //         free(r_new);
+   //
+  //         free(x_loc);
+  //         free(z_loc);
+  //         free(tmp_loc);
+  //         free(r_loc);
+  //         free(r_new_loc);
+   //
+  //         end_t = clock();
+  //         te = MPI_Wtime();
+  //         *tot_time = (double)(end_t - start_t)/(CLOCKS_PER_SEC);
+  //         if(myrank==0) printf("Total time is : %f s \n",te-ts );
+  //         break;
+  //      }
+   //
+  //      rn_sum_loc = vvdot(ROW*COL/nproc,r_new_loc,r_new_loc);
+  //      MPI_Allreduce(&rn_sum_loc,&rn_sum,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+  //      beta = rn_sum/rr_sum;
+   //
+  //      tt = 0;
+  //      for (i=ista;i<iend+1;i++){
+  //          for (j=0;j<COL;j++){
+  //              z_loc[tt] = r_new_loc[tt] + beta*z_loc[tt];
+  //              r_loc[tt] = r_new_loc[tt];
+  //              tt += 1;
+  //          }
+  //      }
+   //
+  //      MPI_Allgather(&z_loc[0],ROW*COL/nproc,MPI_DOUBLE,
+  //                    z,ROW*COL/nproc,MPI_DOUBLE,MPI_COMM_WORLD);
+  //  }
 
 }
 
 //------------------------------------------------------------
 //             Make Stiffness matrix of CG method
 //------------------------------------------------------------
-void make_Abx(int ista,int iend, double **A, double *b,
-                double *x, double**u,double dx, double dy)
+void make_Abx(int ista,int iend,double **A,double **L,double **R,
+              double *b,double *x,double**u,double dx,double dy)
 {
     int i,j,k,l,tmp=0;
 
@@ -183,23 +187,23 @@ void make_Abx(int ista,int iend, double **A, double *b,
             if (k==l){
                 if (k==0 || k==ROW-1){
                   for (i=0;i<ROW;i++){
-                      A[COL*tmp+i][ROW*l+i]   = 1;
+                      A[COL*tmp+i][COL*tmp+i]   = 1;
                   }
                 }
                 else{
                   for (i=0;i<ROW;i++){
                       if (i == 0){
-                          A[COL*tmp+i][ROW*l+i]   = -1;
-                          A[COL*tmp+i+1][ROW*l+i] = 1;
+                          A[COL*tmp+i][COL*tmp+i]   = -1;
+                          A[COL*tmp+i+1][COL*tmp+i] = 1;
                       }
                       else if (i == ROW-1){
-                          A[COL*tmp+i][ROW*l+i]   = -1;
-                          A[COL*tmp+i-1][ROW*l+i] = 1;
+                          A[COL*tmp+i][COL*tmp+i]   = -1;
+                          A[COL*tmp+i-1][COL*tmp+i] = 1;
                       }
                       else {
-                          A[COL*tmp+i][ROW*l+i]   = -4;
-                          A[COL*tmp+i-1][ROW*l+i] = 1;
-                          A[COL*tmp+i+1][ROW*l+i] = 1;
+                          A[COL*tmp+i][COL*tmp+i]   = -4;
+                          A[COL*tmp+i-1][COL*tmp+i] = 1;
+                          A[COL*tmp+i+1][COL*tmp+i] = 1;
                       }
                   }
                 }
@@ -207,17 +211,14 @@ void make_Abx(int ista,int iend, double **A, double *b,
 
             else if ( abs(k-l) == 1 && k!=0 && k!=ROW-1){
                 for (i=0;i<ROW;i++){
-                  if (i==0 || i==ROW-1)
-                    A[COL*tmp+i][ROW*l+i] = 0;
-                  else
-                    A[COL*tmp+i][ROW*l+i] = 1;
-                }
-            }
-            else{
-                for (i=0;i<ROW;i++){
-                    for (j=0;j<COL;j++){
-                        A[COL*tmp+i][ROW*l+j] = 0;
-                    }
+                  if (i==0 || i==ROW-1){
+                    L[COL*tmp+i][COL*tmp+i] = 0;
+                    R[COL*tmp+i][COL*tmp+i] = 0;
+                  }
+                  else{
+                    L[COL*tmp+i][COL*tmp+i] = 1;
+                    R[COL*tmp+i][COL*tmp+i] = 1;
+                  }
                 }
             }
         }
