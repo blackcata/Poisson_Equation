@@ -279,16 +279,26 @@ void vmdot(int myrank, int nproc,int row,int col,
     b_c = (double *) malloc(row * sizeof(double));
     b_r = (double *) malloc(row * sizeof(double));
 
+    for (i=0;i<row;i++){
+        send_r[i] = x[i];
+        send_l[i] = x[i];
+    }
+
     // Left exchange
-    if (myrank!=0)
+    if (myrank!=0){
       MPI_Irecv(recv_l,row,MPI_DOUBLE,myrank-1,101,MPI_COMM_WORLD,&req1);
-    if (myrank!=nproc-1)
-      MPI_Isend(x,row,MPI_DOUBLE,myrank+1,102,MPI_COMM_WORLD,&req2);
+    }
+    if (myrank!=nproc-1){
+      MPI_Isend(send_l,row,MPI_DOUBLE,myrank+1,101,MPI_COMM_WORLD,&req2);
+    }
+
     // Right exchange
-    if (myrank!=nproc-1)
-      MPI_Irecv(recv_r,row,MPI_DOUBLE,myrank+1,101,MPI_COMM_WORLD,&req3);
-    if (myrank!=0)
-      MPI_Isend(x,row,MPI_DOUBLE,myrank-1,102,MPI_COMM_WORLD,&req4);
+    if (myrank!=nproc-1){
+      MPI_Irecv(recv_r,row,MPI_DOUBLE,myrank+1,102,MPI_COMM_WORLD,&req3);
+    }
+    if (myrank!=0){
+      MPI_Isend(send_r,row,MPI_DOUBLE,myrank-1,102,MPI_COMM_WORLD,&req4);
+    }
 
     for (i=0;i<row;i++){
         b_l[i] = 0;
@@ -303,30 +313,33 @@ void vmdot(int myrank, int nproc,int row,int col,
         }
     }
 
-    // Left calculation
-    MPI_Wait(&req1,&stat1);
-    MPI_Wait(&req2,&stat2);
+    //Left calculation
+    if (myrank!=0) MPI_Wait(&req1,&stat1);
+    if (myrank!=nproc-1) MPI_Wait(&req2,&stat2);
 
-    for (i=0;i<row;i++){
-      for (j=0;j<row;j++){
-        b_l[i] = b_l[i] + L[i][j]*recv_l[i];
+    if (myrank!=nproc-1){
+      for (i=0;i<row;i++){
+        for (j=0;j<row;j++){
+          b_l[i] = b_l[i] + L[i][j]*recv_l[i];
+        }
       }
     }
 
-    // Left calculation
-    MPI_Wait(&req3,&stat3);
-    MPI_Wait(&req4,&stat4);
+    // Right calculation
+    if (myrank!=nproc-1) MPI_Wait(&req3,&stat3);
+    if (myrank!=0) MPI_Wait(&req4,&stat4);
 
-    for (i=0;i<row;i++){
-      for (j=0;j<row;j++){
-        b_r[i] = b_r[i] + R[i][j]*recv_r[i];
+    if (myrank!=0){
+      for (i=0;i<row;i++){
+        for (j=0;j<row;j++){
+          b_r[i] = b_r[i] + R[i][j]*recv_r[i];
+        }
       }
     }
 
     for (i=0;i<row;i++){
       b[i] = b_l[i] + b_c[i] + b_r[i];
     }
-
 }
 
 double vvdot(int num, double *a, double *b)
