@@ -1,9 +1,9 @@
-IC=mpicc
+IC=icc
 TARGET= Poisson_Equation
 OBJECT= Poisson_Equation.o Poisson_Solver.o Jacobi.o SOR.o Conjugate_Gradient.o
 
-FCFLAGS= -O2 -lm
-LDFLAGS= 
+FCFLAGS= -O2 -L$(MPI_HOME)/lib -I$(MPI_HOME)/include
+LDFLAGS= -lmpi
 
 all : $(TARGET)
 $(TARGET) : $(OBJECT)
