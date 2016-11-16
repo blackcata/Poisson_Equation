@@ -73,47 +73,43 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
     r_new_loc   = (double *) malloc(ROW*COL/nproc * sizeof(double));
 
     MPI_Barrier(MPI_COMM_WORLD);
-    make_Abx(ista,iend,A,L,R,b_loc,x_loc,p,dx,dy)
+    make_Abx(ista,iend,A,L,R,b_loc,x_loc,p,dx,dy);
 
-  // vmdot(myrank,nproc,ROW*COL/nproc,ROW*COL/nproc,L,A,R,x_loc,tmp_loc);
-  //   printf("\n" );
-  //  tt = 0;
-  //  for (i=ista;i<iend+1;i++){
-  //      for (j=0;j<COL;j++){
-  //          r_loc[tt] = b_loc[tt] - tmp_loc[tt];
-  //          z_loc[tt] = r_loc[tt];
-  //          tt+=1;
-  //      }
-  //  }
-   //
-  //  //---------------------------------------
-  //  //   Main Loop of Conjugate_Gradient
-  //  //---------------------------------------
-  //  for (it=0;it<1;it++)
-  //  {
-  //      vmdot(myrank,nproc,ROW*COL/nproc,ROW*COL/nproc,L,A,R,z_loc,tmp_loc);
-  //      if (myrank==0){
-  //        for (i=0;i<ROW*COL/nproc;i++){
-  //          printf("tmp[%d] : %f \n",i,tmp_loc[i]);
-  //        }
-  //      }
-  //      rr_sum_loc = vvdot(ROW*COL/nproc,r_loc,r_loc);
-  //      zAz_sum_loc = vvdot(ROW*COL/nproc,z_loc,tmp_loc);
-   //
-  //      MPI_Allreduce(&rr_sum_loc,&rr_sum,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
-  //      MPI_Allreduce(&zAz_sum_loc,&zAz_sum,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
-  //      alpha = rr_sum/zAz_sum;
-  //      printf("rr : %f, zAz : %f, alpha : %f\n",rr_sum,zAz_sum,alpha);
-   //
-  //      tt = 0;
-  //      for (i=ista;i<iend+1;i++){
-  //          for (j=0;j<COL;j++){
-  //              x_loc[tt] = x_loc[tt] + alpha * z_loc[tt];
-  //              r_new_loc[tt] = r_loc[tt] - alpha*tmp_loc[tt];
-  //              tt+=1;
-  //          }
-  //      }
-   //
+    vmdot(myrank,nproc,ROW*COL/nproc,ROW*COL/nproc,L,A,R,x_loc,tmp_loc);
+
+    tt = 0;
+    for (i=ista;i<iend+1;i++){
+       for (j=0;j<COL;j++){
+           r_loc[tt] = b_loc[tt] - tmp_loc[tt];
+           z_loc[tt] = r_loc[tt];
+           tt+=1;
+       }
+    }
+
+   //---------------------------------------
+   //   Main Loop of Conjugate_Gradient
+   //---------------------------------------
+   for (it=0;it<1;it++)
+   {
+       vmdot(myrank,nproc,ROW*COL/nproc,ROW*COL/nproc,L,A,R,z_loc,tmp_loc);
+
+       rr_sum_loc = vvdot(ROW*COL/nproc,r_loc,r_loc);
+       zAz_sum_loc = vvdot(ROW*COL/nproc,z_loc,tmp_loc);
+
+       MPI_Allreduce(&rr_sum_loc,&rr_sum,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+       MPI_Allreduce(&zAz_sum_loc,&zAz_sum,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+       alpha = rr_sum/zAz_sum;
+       printf("rr : %f, zAz : %f, alpha : %f\n",rr_sum,zAz_sum,alpha);
+
+       tt = 0;
+       for (i=ista;i<iend+1;i++){
+           for (j=0;j<COL;j++){
+               x_loc[tt] = x_loc[tt] + alpha * z_loc[tt];
+               r_new_loc[tt] = r_loc[tt] - alpha*tmp_loc[tt];
+               tt+=1;
+           }
+       }
+
   //      rnew_sum_loc = pow(norm_L2(ROW*COL/nproc,r_new_loc),2);
   //      MPI_Allreduce(&rnew_sum_loc,&rnew_sum,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
    //
@@ -167,7 +163,7 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
   //              tt += 1;
   //          }
   //      }
-    // }
+   }
 
 }
 
@@ -282,9 +278,9 @@ double norm_L2(int num, double *a)
 void vmdot(int myrank, int nproc,int row,int col,
            double **L, double **A, double **R,double *x,double *b)
 {
-    int i,j;
+    int i,j,tmp;
     double *send_l, *recv_l,*send_r, *recv_r;
-    double *b_l, *b_c, *b_r;
+
     MPI_Request req1, req2, req3, req4;
     MPI_Status stat1, stat2, stat3, stat4;
 
@@ -293,38 +289,31 @@ void vmdot(int myrank, int nproc,int row,int col,
     send_r = (double *) malloc(COL * sizeof(double));
     recv_r = (double *) malloc(COL * sizeof(double));
 
-    b_l = (double *) malloc(row * sizeof(double));
-    b_c = (double *) malloc(row * sizeof(double));
-    b_r = (double *) malloc(row * sizeof(double));
-
-    for (i=0;i<row;i++){
-        b_l[i] = 0;
-        b_c[i] = 0;
-        b_r[i] = 0;
+    for (i=0;i<COL;i++){
         send_r[i] = x[i];
-        send_l[i] = x[i];
+        send_l[i] = x[row-COL+i];
     }
 
     // Left exchange
     if (myrank!=0){
-      MPI_Irecv(recv_l,row,MPI_DOUBLE,myrank-1,101,MPI_COMM_WORLD,&req1);
+      MPI_Irecv(recv_l,COL,MPI_DOUBLE,myrank-1,101,MPI_COMM_WORLD,&req1);
     }
     if (myrank!=nproc-1){
-      MPI_Isend(send_l,row,MPI_DOUBLE,myrank+1,101,MPI_COMM_WORLD,&req2);
+      MPI_Isend(send_l,COL,MPI_DOUBLE,myrank+1,101,MPI_COMM_WORLD,&req2);
     }
 
     // Right exchange
     if (myrank!=nproc-1){
-      MPI_Irecv(recv_r,row,MPI_DOUBLE,myrank+1,102,MPI_COMM_WORLD,&req3);
+      MPI_Irecv(recv_r,COL,MPI_DOUBLE,myrank+1,102,MPI_COMM_WORLD,&req3);
     }
     if (myrank!=0){
-      MPI_Isend(send_r,row,MPI_DOUBLE,myrank-1,102,MPI_COMM_WORLD,&req4);
+      MPI_Isend(send_r,COL,MPI_DOUBLE,myrank-1,102,MPI_COMM_WORLD,&req4);
     }
 
     // Center calculation
     for (i=0;i<row;i++){
         for (j=0;j<col;j++){
-            b_c[i] = b_c[i] + A[i][j]*x[j];
+            b[i] = b[i] + A[i][j]*x[j];
         }
     }
 
@@ -333,10 +322,12 @@ void vmdot(int myrank, int nproc,int row,int col,
     if (myrank!=nproc-1) MPI_Wait(&req2,&stat2);
 
     if (myrank!=0){
-      for (i=0;i<row;i++){
-        for (j=0;j<col;j++){
-          b_l[i] = b_l[i] + L[i][j]*recv_l[j];
+      tmp = 0;
+      for (i=0;i<COL;i++){
+        for (j=0;j<COL;j++){
+          b[i] = b[i] + L[tmp][j]*recv_l[j];
         }
+        tmp += 1;
       }
     }
 
@@ -345,29 +336,35 @@ void vmdot(int myrank, int nproc,int row,int col,
     if (myrank!=0) MPI_Wait(&req4,&stat4);
 
     if (myrank!=nproc-1){
-      for (i=0;i<row;i++){
-        for (j=0;j<col;j++){
-          b_r[i] = b_r[i] + R[i][j]*recv_r[j];
+      tmp = 0;
+      for (i=row-COL;i<row;i++){
+        for (j=0;j<COL;j++){
+          b[i] = b[i] + R[tmp][j]*recv_r[j];
         }
+        tmp += 1;
       }
     }
+    // if (myrank==0)
+    // {
+    //   for (i=0;i<COL;i++){
+    //     printf("recv_r[%d] : %f\n",i,recv_r[i]);
+    //   }
+    // }
+    // for (i=0;i<row;i++){
+    //   b[i] = b_l[i] + b_c[i] + b_r[i];
+    //   if (myrank==0){
+    //       printf("b[%d] = b_l[%d] + b_c[%d] + b_r[%d] : %f %f %f %f\n",i,i,i,i,b[i],b_l[i],b_c[i],b_r[i] );
+    //   }
+    // }
 
-    for (i=0;i<row;i++){
-      b[i] = b_l[i] + b_c[i] + b_r[i];
-      if (myrank==0){
-          printf("b[%d] = b_l[%d] + b_c[%d] + b_r[%d] : %f %f %f %f\n",i,i,i,i,b[i],b_l[i],b_c[i],b_r[i] );
-      }
-    }
-
-    if (myrank==0){
-      for (i=0;i<row;i++){
-        for (j=0;j<row;j++){
-          printf("%f ",A[i][j]);
-        }
-        printf("\n" );
-      }
-
-    }
+    // if (myrank==0){
+    //   for (i=0;i<row;i++){
+    //     for (j=0;j<row;j++){
+    //       printf("%f ",A[i][j]);
+    //     }
+    //     printf("\n" );
+    //   }
+    // }
 }
 
 double vvdot(int num, double *a, double *b)
