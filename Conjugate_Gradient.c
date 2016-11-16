@@ -324,6 +324,7 @@ void vmdot(int myrank, int nproc,int row,int col,
         tmp += 1;
       }
     }
+}
 
 double vvdot(int num, double *a, double *b)
 {
