@@ -294,10 +294,6 @@ void vmdot(int myrank, int nproc,int row,int col,
     for (i=0;i<row;i++){
         for (j=0;j<col;j++){
             b[i] = b[i] + A[i][j]*x[j];
-            // if(myrank==0) {
-            //   printf("b[%d](%f) = b[%d](%f) + A[%d][%d](%f)*x[%d](%f)\n",
-            //           i,b[i],i,b[i],i,j,A[i][j],i,x[j]);
-            // }
         }
     }
 
@@ -310,10 +306,6 @@ void vmdot(int myrank, int nproc,int row,int col,
       for (i=0;i<COL;i++){
         for (j=0;j<COL;j++){
           b[i] = b[i] + L[tmp][j]*recv_l[j];
-          // if(myrank==0) {
-          //   printf("b[%d](%f) = b[%d](%f) + L[%d][%d](%f)*recv_l[%d](%f)\n",
-          //           i,b[i],i,b[i],i,j,L[tmp][j],j,recv_l[j]);
-          // }
         }
         tmp += 1;
       }
@@ -328,31 +320,10 @@ void vmdot(int myrank, int nproc,int row,int col,
       for (i=row-COL;i<row;i++){
         for (j=0;j<COL;j++){
           b[i] = b[i] + R[tmp][j]*recv_r[j];
-          // if(myrank==0) {
-          //   printf("b[%d](%f) = b[%d](%f) + R[%d][%d](%f)*recv_r[%d](%f)\n",
-          //           i,b[i],i,b[i],i,j,R[tmp][j],j,recv_r[j]);
-          // }
         }
         tmp += 1;
       }
     }
-
-    // if (myrank==0)
-    // {
-    //   for (i=0;i<COL;i++){
-    //     printf("recv_r[%d] : %f\n",i,recv_r[i]);
-    //   }
-    // }
-
-    // if (myrank==0){
-    //   for (i=0;i<row;i++){
-    //     for (j=0;j<row;j++){
-    //       printf("%f ",A[i][j]);
-    //     }
-    //     printf("\n" );
-    //   }
-    // }
-}
 
 double vvdot(int num, double *a, double *b)
 {
