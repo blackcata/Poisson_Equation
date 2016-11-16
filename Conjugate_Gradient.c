@@ -77,92 +77,72 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
 
     vmdot(myrank,nproc,ROW*COL/nproc,ROW*COL/nproc,L,A,R,x_loc,tmp_loc);
 
-    tt = 0;
-    for (i=ista;i<iend+1;i++){
-       for (j=0;j<COL;j++){
-           r_loc[tt] = b_loc[tt] - tmp_loc[tt];
-           z_loc[tt] = r_loc[tt];
-           tt+=1;
-       }
+    for (i=0;i<ROW*COL/nproc;i++){
+           r_loc[i] = b_loc[i] - tmp_loc[i];
+           z_loc[i] = r_loc[i];
     }
 
    //---------------------------------------
    //   Main Loop of Conjugate_Gradient
    //---------------------------------------
-   for (it=0;it<1;it++)
+   for (it=0;it<itmax;it++)
    {
-       vmdot(myrank,nproc,ROW*COL/nproc,ROW*COL/nproc,L,A,R,z_loc,tmp_loc);
 
+       vmdot(myrank,nproc,ROW*COL/nproc,ROW*COL/nproc,L,A,R,z_loc,tmp_loc);
        rr_sum_loc = vvdot(ROW*COL/nproc,r_loc,r_loc);
        zAz_sum_loc = vvdot(ROW*COL/nproc,z_loc,tmp_loc);
 
        MPI_Allreduce(&rr_sum_loc,&rr_sum,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
        MPI_Allreduce(&zAz_sum_loc,&zAz_sum,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
        alpha = rr_sum/zAz_sum;
-       printf("rr : %f, zAz : %f, alpha : %f\n",rr_sum,zAz_sum,alpha);
 
-       tt = 0;
-       for (i=ista;i<iend+1;i++){
-           for (j=0;j<COL;j++){
-               x_loc[tt] = x_loc[tt] + alpha * z_loc[tt];
-               r_new_loc[tt] = r_loc[tt] - alpha*tmp_loc[tt];
-               tt+=1;
-           }
+       for (i=0;i<ROW*COL/nproc;i++){
+               x_loc[i] = x_loc[i] + alpha * z_loc[i];
+               r_new_loc[i] = r_loc[i] - alpha*tmp_loc[i];
        }
 
-  //      rnew_sum_loc = pow(norm_L2(ROW*COL/nproc,r_new_loc),2);
-  //      MPI_Allreduce(&rnew_sum_loc,&rnew_sum,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
-   //
-  //      if ( sqrt(rnew_sum) < tol ){
-  //         //---------------------------------------
-  //         //   Redistribute x vector to array
-  //         //---------------------------------------
-  //         MPI_Allgather(&x_loc[0],ROW*COL/nproc,MPI_DOUBLE,
-  //                     x,ROW*COL/nproc,MPI_DOUBLE,MPI_COMM_WORLD);
-  //         if (myrank == 0){
-  //           tt = 0;
-  //           for (i=0;i<ROW;i++){
-  //             for (j=0;j<COL;j++){
-  //               p[i][j] = x[tt];
-  //               tt += 1;
-  //             }
-  //           }
-  //         }
-   //
-  //         *iter = it;
-  //         free(A);
-  //         free(tmp);
-  //         free(x);
-  //         free(z);
-  //         free(r);
-  //         free(r_new);
+       rnew_sum_loc = pow(norm_L2(ROW*COL/nproc,r_new_loc),2);
+       MPI_Allreduce(&rnew_sum_loc,&rnew_sum,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+      if (myrank==0) printf("cri : %f, tol : %f, \n",sqrt(rnew_sum),tol);
+       if ( sqrt(rnew_sum) < tol ){
+          //---------------------------------------
+          //   Redistribute x vector to array
+          //---------------------------------------
+          MPI_Allgather(&x_loc[0],ROW*COL/nproc,MPI_DOUBLE,
+                      x,ROW*COL/nproc,MPI_DOUBLE,MPI_COMM_WORLD);
+          if (myrank == 0){
+            tt = 0;
+            for (i=0;i<ROW;i++){
+              for (j=0;j<COL;j++){
+                p[i][j] = x[tt];
+                tt += 1;
+              }
+            }
+          }
+          *iter = it;
 
-  //         free(b_loc);
-  //         free(x_loc);
-  //         free(z_loc);
-  //         free(tmp_loc);
-  //         free(r_loc);
-  //         free(r_new_loc);
-   //
-  //         end_t = clock();
-  //         te = MPI_Wtime();
-  //         *tot_time = (double)(end_t - start_t)/(CLOCKS_PER_SEC);
-  //         if(myrank==0) printf("Total time is : %f s \n",te-ts );
-  //         break;
-  //      }
-   //
-  //      rn_sum_loc = vvdot(ROW*COL/nproc,r_new_loc,r_new_loc);
-  //      MPI_Allreduce(&rn_sum_loc,&rn_sum,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
-  //      beta = rn_sum/rr_sum;
-   //
-  //      tt = 0;
-  //      for (i=ista;i<iend+1;i++){
-  //          for (j=0;j<COL;j++){
-  //              z_loc[tt] = r_new_loc[tt] + beta*z_loc[tt];
-  //              r_loc[tt] = r_new_loc[tt];
-  //              tt += 1;
-  //          }
-  //      }
+          free(b_loc);
+          free(x_loc);
+          free(z_loc);
+          free(tmp_loc);
+          free(r_loc);
+          free(r_new_loc);
+
+          end_t = clock();
+          te = MPI_Wtime();
+          *tot_time = (double)(end_t - start_t)/(CLOCKS_PER_SEC);
+          if(myrank==0) printf("Total time is : %f s \n",te-ts );
+          break;
+       }
+
+       rn_sum_loc = vvdot(ROW*COL/nproc,r_new_loc,r_new_loc);
+       MPI_Allreduce(&rn_sum_loc,&rn_sum,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+       beta = rn_sum/rr_sum;
+
+       for (i=0;i<ROW*COL/nproc;i++){
+           z_loc[i] = r_new_loc[i] + beta*z_loc[i];
+           r_loc[i] = r_new_loc[i];
+       }
    }
 
 }
@@ -290,70 +270,77 @@ void vmdot(int myrank, int nproc,int row,int col,
     recv_r = (double *) malloc(COL * sizeof(double));
 
     for (i=0;i<COL;i++){
-        send_r[i] = x[i];
-        send_l[i] = x[row-COL+i];
+        send_l[i] = x[i];
+        send_r[i] = x[row-COL+i];
+    }
+
+    for (i=0;i<ROW*COL/nproc;i++){
+        b[i] = 0;
     }
 
     // Left exchange
     if (myrank!=0){
       MPI_Irecv(recv_l,COL,MPI_DOUBLE,myrank-1,101,MPI_COMM_WORLD,&req1);
-    }
-    if (myrank!=nproc-1){
-      MPI_Isend(send_l,COL,MPI_DOUBLE,myrank+1,101,MPI_COMM_WORLD,&req2);
+      MPI_Isend(send_l,COL,MPI_DOUBLE,myrank-1,102,MPI_COMM_WORLD,&req2);
     }
 
     // Right exchange
     if (myrank!=nproc-1){
       MPI_Irecv(recv_r,COL,MPI_DOUBLE,myrank+1,102,MPI_COMM_WORLD,&req3);
-    }
-    if (myrank!=0){
-      MPI_Isend(send_r,COL,MPI_DOUBLE,myrank-1,102,MPI_COMM_WORLD,&req4);
+      MPI_Isend(send_r,COL,MPI_DOUBLE,myrank+1,101,MPI_COMM_WORLD,&req4);
     }
 
     // Center calculation
     for (i=0;i<row;i++){
         for (j=0;j<col;j++){
             b[i] = b[i] + A[i][j]*x[j];
+            // if(myrank==0) {
+            //   printf("b[%d](%f) = b[%d](%f) + A[%d][%d](%f)*x[%d](%f)\n",
+            //           i,b[i],i,b[i],i,j,A[i][j],i,x[j]);
+            // }
         }
     }
 
     //Left calculation
     if (myrank!=0) MPI_Wait(&req1,&stat1);
-    if (myrank!=nproc-1) MPI_Wait(&req2,&stat2);
+    if (myrank!=nproc-1) MPI_Wait(&req4,&stat4);
 
     if (myrank!=0){
       tmp = 0;
       for (i=0;i<COL;i++){
         for (j=0;j<COL;j++){
           b[i] = b[i] + L[tmp][j]*recv_l[j];
+          // if(myrank==0) {
+          //   printf("b[%d](%f) = b[%d](%f) + L[%d][%d](%f)*recv_l[%d](%f)\n",
+          //           i,b[i],i,b[i],i,j,L[tmp][j],j,recv_l[j]);
+          // }
         }
         tmp += 1;
       }
     }
 
     // Right calculation
+    if (myrank!=0) MPI_Wait(&req2,&stat2);
     if (myrank!=nproc-1) MPI_Wait(&req3,&stat3);
-    if (myrank!=0) MPI_Wait(&req4,&stat4);
 
     if (myrank!=nproc-1){
       tmp = 0;
       for (i=row-COL;i<row;i++){
         for (j=0;j<COL;j++){
           b[i] = b[i] + R[tmp][j]*recv_r[j];
+          // if(myrank==0) {
+          //   printf("b[%d](%f) = b[%d](%f) + R[%d][%d](%f)*recv_r[%d](%f)\n",
+          //           i,b[i],i,b[i],i,j,R[tmp][j],j,recv_r[j]);
+          // }
         }
         tmp += 1;
       }
     }
+
     // if (myrank==0)
     // {
     //   for (i=0;i<COL;i++){
     //     printf("recv_r[%d] : %f\n",i,recv_r[i]);
-    //   }
-    // }
-    // for (i=0;i<row;i++){
-    //   b[i] = b_l[i] + b_c[i] + b_r[i];
-    //   if (myrank==0){
-    //       printf("b[%d] = b_l[%d] + b_c[%d] + b_r[%d] : %f %f %f %f\n",i,i,i,i,b[i],b_l[i],b_c[i],b_r[i] );
     //   }
     // }
 
