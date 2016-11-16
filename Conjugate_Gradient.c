@@ -31,8 +31,8 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
     double rnew_sum,rnew_sum_loc,rr_sum,rr_sum_loc,rn_sum,rn_sum_loc,zAz_sum,zAz_sum_loc ;
 
     double **A, **L, **R;
-    double *tmp, *x, *b, *z, *r, *r_new;
-    double *tmp_loc, *r_loc, *r_new_loc, *x_loc, *z_loc;
+    double *tmp, *x, *z, *r, *r_new;
+    double *tmp_loc, *b_loc, *r_loc, *r_new_loc, *x_loc, *z_loc;
 
     time_t start_t = 0, end_t = 0;
 
@@ -48,21 +48,24 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
     printf("[ista,iend] : [%d,%d]\n \n",ista,iend );
 
     A = (double **) malloc(ROW*COL/nproc * sizeof(double));
-    L = (double **) malloc(ROW*COL/nproc * sizeof(double));
-    R = (double **) malloc(ROW*COL/nproc * sizeof(double));
+    L = (double **) malloc(ROW * sizeof(double));
+    R = (double **) malloc(ROW * sizeof(double));
     for (i=0;i<ROW*COL/nproc;i++) {
       A[i] = (double *) malloc(ROW*COL/nproc * sizeof(double));
-      L[i] = (double *) malloc(ROW*COL/nproc * sizeof(double));
-      R[i] = (double *) malloc(ROW*COL/nproc * sizeof(double));
+    }
+    for (i=0;i<ROW;i++){
+      L[i] = (double *) malloc(COL * sizeof(double));
+      R[i] = (double *) malloc(COL * sizeof(double));
     }
 
     tmp    = (double *) malloc(ROW*COL * sizeof(double));
     x      = (double *) malloc(ROW*COL * sizeof(double));
-    b      = (double *) malloc(ROW*COL * sizeof(double));
+
     z      = (double *) malloc(ROW*COL * sizeof(double));
     r      = (double *) malloc(ROW*COL * sizeof(double));
     r_new  = (double *) malloc(ROW*COL * sizeof(double));
 
+    b_loc       = (double *) malloc(ROW*COL * sizeof(double));
     x_loc       = (double *) malloc(ROW*COL/nproc * sizeof(double));
     z_loc       = (double *) malloc(ROW*COL/nproc * sizeof(double));
     tmp_loc     = (double *) malloc(ROW*COL/nproc * sizeof(double));
@@ -70,38 +73,37 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
     r_new_loc   = (double *) malloc(ROW*COL/nproc * sizeof(double));
 
     MPI_Barrier(MPI_COMM_WORLD);
-    make_Abx(ista,iend,A,L,R,b,x,p,dx,dy);
+    make_Abx(ista,iend,A,L,R,b_loc,x_loc,p,dx,dy)
 
-    vmdot(myrank,nproc,ROW*COL/nproc,ROW*COL/nproc,L,A,R,x,tmp_loc);
-  //   MPI_Allgather(&tmp_loc[0],ROW*COL/nproc,MPI_DOUBLE,
-  //                 tmp,ROW*COL/nproc,MPI_DOUBLE,MPI_COMM_WORLD);
-   //
+  // vmdot(myrank,nproc,ROW*COL/nproc,ROW*COL/nproc,L,A,R,x_loc,tmp_loc);
+  //   printf("\n" );
   //  tt = 0;
   //  for (i=ista;i<iend+1;i++){
   //      for (j=0;j<COL;j++){
-  //          r_loc[tt] = b[COL*i+j] - tmp[COL*i+j];
+  //          r_loc[tt] = b_loc[tt] - tmp_loc[tt];
   //          z_loc[tt] = r_loc[tt];
   //          tt+=1;
   //      }
   //  }
    //
-  //  MPI_Allgather(&r_loc[0],ROW*COL/nproc,MPI_DOUBLE,
-  //                r,ROW*COL/nproc,MPI_DOUBLE,MPI_COMM_WORLD);
-  //  MPI_Allgather(&z_loc[0],ROW*COL/nproc,MPI_DOUBLE,
-  //                z,ROW*COL/nproc,MPI_DOUBLE,MPI_COMM_WORLD);
-
   //  //---------------------------------------
   //  //   Main Loop of Conjugate_Gradient
   //  //---------------------------------------
-  //  for (it=0;it<itmax;it++)
+  //  for (it=0;it<1;it++)
   //  {
-  //      vmdot(ROW*COL/nproc,ROW*COL,A,z,tmp_loc);
+  //      vmdot(myrank,nproc,ROW*COL/nproc,ROW*COL/nproc,L,A,R,z_loc,tmp_loc);
+  //      if (myrank==0){
+  //        for (i=0;i<ROW*COL/nproc;i++){
+  //          printf("tmp[%d] : %f \n",i,tmp_loc[i]);
+  //        }
+  //      }
   //      rr_sum_loc = vvdot(ROW*COL/nproc,r_loc,r_loc);
   //      zAz_sum_loc = vvdot(ROW*COL/nproc,z_loc,tmp_loc);
    //
   //      MPI_Allreduce(&rr_sum_loc,&rr_sum,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
   //      MPI_Allreduce(&zAz_sum_loc,&zAz_sum,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
   //      alpha = rr_sum/zAz_sum;
+  //      printf("rr : %f, zAz : %f, alpha : %f\n",rr_sum,zAz_sum,alpha);
    //
   //      tt = 0;
   //      for (i=ista;i<iend+1;i++){
@@ -135,11 +137,11 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
   //         free(A);
   //         free(tmp);
   //         free(x);
-  //         free(b);
   //         free(z);
   //         free(r);
   //         free(r_new);
-   //
+
+  //         free(b_loc);
   //         free(x_loc);
   //         free(z_loc);
   //         free(tmp_loc);
@@ -165,10 +167,7 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
   //              tt += 1;
   //          }
   //      }
-   //
-  //      MPI_Allgather(&z_loc[0],ROW*COL/nproc,MPI_DOUBLE,
-  //                    z,ROW*COL/nproc,MPI_DOUBLE,MPI_COMM_WORLD);
-  //  }
+    // }
 
 }
 
@@ -178,33 +177,34 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
 void make_Abx(int ista,int iend,double **A,double **L,double **R,
               double *b,double *x,double**u,double dx,double dy)
 {
-    int i,j,k,l,tmp=0;
+    int i,j,k,l,tmp=0,tmp2=0;;
 
     //--------------------------------
     //         Make Matrix A
     //--------------------------------
     for (k=ista;k<iend+1;k++){
-        for (l=0;l<COL;l++){
+        tmp2 = 0;
+        for (l=ista;l<iend+1;l++){
             if (k==l){
                 if (k==0 || k==ROW-1){
                   for (i=0;i<ROW;i++){
-                      A[COL*tmp+i][COL*tmp+i]   = 1;
+                      A[COL*tmp+i][ROW*tmp2+i]   = 1;
                   }
                 }
                 else{
                   for (i=0;i<ROW;i++){
                       if (i == 0){
-                          A[COL*tmp+i][COL*tmp+i]   = -1;
-                          A[COL*tmp+i+1][COL*tmp+i] = 1;
+                          A[COL*tmp+i][ROW*tmp2+i]   = -1;
+                          A[COL*tmp+i+1][ROW*tmp2+i] = 1;
                       }
                       else if (i == ROW-1){
-                          A[COL*tmp+i][COL*tmp+i]   = -1;
-                          A[COL*tmp+i-1][COL*tmp+i] = 1;
+                          A[COL*tmp+i][ROW*tmp2+i]   = -1;
+                          A[COL*tmp+i-1][ROW*tmp2+i] = 1;
                       }
                       else {
-                          A[COL*tmp+i][COL*tmp+i]   = -4;
-                          A[COL*tmp+i-1][COL*tmp+i] = 1;
-                          A[COL*tmp+i+1][COL*tmp+i] = 1;
+                          A[COL*tmp+i][ROW*tmp2+i]   = -4;
+                          A[COL*tmp+i-1][ROW*tmp2+i] = 1;
+                          A[COL*tmp+i+1][ROW*tmp2+i] = 1;
                       }
                   }
                 }
@@ -213,37 +213,55 @@ void make_Abx(int ista,int iend,double **A,double **L,double **R,
             else if ( abs(k-l) == 1 && k!=0 && k!=ROW-1){
                 for (i=0;i<ROW;i++){
                   if (i==0 || i==ROW-1){
-                    L[COL*tmp+i][COL*tmp+i] = 0;
-                    R[COL*tmp+i][COL*tmp+i] = 0;
+                    A[COL*tmp+i][ROW*tmp2+i] = 0;
                   }
                   else{
-                    L[COL*tmp+i][COL*tmp+i] = 1;
-                    R[COL*tmp+i][COL*tmp+i] = 1;
+                    A[COL*tmp+i][ROW*tmp2+i] = 1;
                   }
                 }
             }
+            tmp2 += 1;
         }
         tmp += 1;
     }
+    //--------------------------------
+    //       Make matrix L,R
+    //--------------------------------
+    for (i=0;i<ROW;i++){
+      if (i==0 || i==ROW-1){
+        L[i][i] = 0;
+        R[i][i] = 0;
+      }
+      else{
+        L[i][i] = 1;
+        R[i][i] = 1;
+      }
+    }
+
 
     //--------------------------------
     //         Make Vector x
     //--------------------------------
-    for (i=0;i<ROW;i++){
+    tmp = 0;
+    for (i=ista;i<iend+1;i++){
         for (j=0;j<COL;j++){
-            x[ROW*i+j] = u[i][j];
+            x[tmp] = u[i][j];
+            tmp += 1;
         }
     }
     //--------------------------------
     //        Make Vector b
     //--------------------------------
-    for (i=0;i<ROW;i++){
+    tmp =0;
+    for (i=ista;i<iend+1;i++){
         for (j=0;j<COL;j++){
           if (i==0 || i==ROW-1 || j==0 || j==COL-1)
-            b[ROW*i+j] = 0;//1/(2*pow(pi,2))*func(i,j,dx,dy);
+              b[tmp] = 0;//1/(2*pow(pi,2))*func(i,j,dx,dy);
           else
-              b[ROW*i+j] = dx*dx*func(i,j,dx,dy);
+              b[tmp] = dx*dx*func(i,j,dx,dy);
+          tmp +=1;
         }
+
     }
 }
 
@@ -270,16 +288,19 @@ void vmdot(int myrank, int nproc,int row,int col,
     MPI_Request req1, req2, req3, req4;
     MPI_Status stat1, stat2, stat3, stat4;
 
-    send_l = (double *) malloc(row * sizeof(double));
-    recv_l = (double *) malloc(row * sizeof(double));
-    send_r = (double *) malloc(row * sizeof(double));
-    recv_r = (double *) malloc(row * sizeof(double));
+    send_l = (double *) malloc(COL * sizeof(double));
+    recv_l = (double *) malloc(COL * sizeof(double));
+    send_r = (double *) malloc(COL * sizeof(double));
+    recv_r = (double *) malloc(COL * sizeof(double));
 
     b_l = (double *) malloc(row * sizeof(double));
     b_c = (double *) malloc(row * sizeof(double));
     b_r = (double *) malloc(row * sizeof(double));
 
     for (i=0;i<row;i++){
+        b_l[i] = 0;
+        b_c[i] = 0;
+        b_r[i] = 0;
         send_r[i] = x[i];
         send_l[i] = x[i];
     }
@@ -300,12 +321,6 @@ void vmdot(int myrank, int nproc,int row,int col,
       MPI_Isend(send_r,row,MPI_DOUBLE,myrank-1,102,MPI_COMM_WORLD,&req4);
     }
 
-    for (i=0;i<row;i++){
-        b_l[i] = 0;
-        b_c[i] = 0;
-        b_r[i] = 0;
-    }
-
     // Center calculation
     for (i=0;i<row;i++){
         for (j=0;j<col;j++){
@@ -317,10 +332,10 @@ void vmdot(int myrank, int nproc,int row,int col,
     if (myrank!=0) MPI_Wait(&req1,&stat1);
     if (myrank!=nproc-1) MPI_Wait(&req2,&stat2);
 
-    if (myrank!=nproc-1){
+    if (myrank!=0){
       for (i=0;i<row;i++){
-        for (j=0;j<row;j++){
-          b_l[i] = b_l[i] + L[i][j]*recv_l[i];
+        for (j=0;j<col;j++){
+          b_l[i] = b_l[i] + L[i][j]*recv_l[j];
         }
       }
     }
@@ -329,16 +344,29 @@ void vmdot(int myrank, int nproc,int row,int col,
     if (myrank!=nproc-1) MPI_Wait(&req3,&stat3);
     if (myrank!=0) MPI_Wait(&req4,&stat4);
 
-    if (myrank!=0){
+    if (myrank!=nproc-1){
       for (i=0;i<row;i++){
-        for (j=0;j<row;j++){
-          b_r[i] = b_r[i] + R[i][j]*recv_r[i];
+        for (j=0;j<col;j++){
+          b_r[i] = b_r[i] + R[i][j]*recv_r[j];
         }
       }
     }
 
     for (i=0;i<row;i++){
       b[i] = b_l[i] + b_c[i] + b_r[i];
+      if (myrank==0){
+          printf("b[%d] = b_l[%d] + b_c[%d] + b_r[%d] : %f %f %f %f\n",i,i,i,i,b[i],b_l[i],b_c[i],b_r[i] );
+      }
+    }
+
+    if (myrank==0){
+      for (i=0;i<row;i++){
+        for (j=0;j<row;j++){
+          printf("%f ",A[i][j]);
+        }
+        printf("\n" );
+      }
+
     }
 }
 
