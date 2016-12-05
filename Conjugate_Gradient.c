@@ -134,6 +134,10 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
               sprintf(loc_name,"%d.%s",myrank,file_name);
               write_u(dir_name,loc_name,write_type,x_loc,dx,dy);
               break;
+
+            case 3:
+              write_u(dir_name,file_name,write_type,x_loc,dx,dy);
+              break;
           }
 
           free(b_loc);

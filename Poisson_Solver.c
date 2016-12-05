@@ -31,7 +31,7 @@ void error_rms(double **p, double **p_anal, double *err);
 void poisson_solver(double **u, double **u_anal, double tol, double omega,
                     int BC, int method, int write_type,char *dir_name){
 
-  char *file_name ;
+  char *file_name;
 
   int iter = 0, myrank;
   double Lx = 1.0, Ly = 1.0;
@@ -141,25 +141,31 @@ void write_u(char *dir_nm,char *file_nm,int write_type,
              double *p,double dx,double dy)
 {
     FILE* stream;
+    MPI_File thefile;
+    MPI_Offset disp;
+
     int i,j,myrank,nproc;
-    char file_path[50];
+    double tmp[3];
+    char file_path[50], header[50];
+
     MPI_Comm_size(MPI_COMM_WORLD,&nproc);
     MPI_Comm_rank(MPI_COMM_WORLD,&myrank);
     sprintf(file_path,"%s%s",dir_nm,file_nm);
 
-    stream=fopen(file_path,"w");
-
     switch (write_type) {
       case 1:
+        stream=fopen(file_path,"w");
         fprintf(stream,"ZONE I=%d J=%d \n",ROW,COL);
         for (i=0;i<ROW;i++){
             for(j=0;j<COL;j++){
                 fprintf(stream,"%f %f %f \n",i*dx,j*dy,p[i*ROW+j]);
             }
         }
+        fclose(stream);
         break;
 
       case 2:
+        stream=fopen(file_path,"w");
         fprintf(stream,"ZONE I=%d J=%d \n",COL,ROW/nproc);
         for (i=myrank*(ROW/nproc);i<(myrank+1)*(ROW/nproc);i++){
             for(j=0;j<COL;j++){
@@ -167,9 +173,30 @@ void write_u(char *dir_nm,char *file_nm,int write_type,
                                 p[(i-myrank*(ROW/nproc))*ROW+j]);
             }
         }
+        fclose(stream);
+        break;
+
+      case 3:
+        sprintf(header,"ZONE I=%d J=%d \n",COL,ROW);
+
+        MPI_File_open(MPI_COMM_WORLD,file_path,
+                    MPI_MODE_WRONLY | MPI_MODE_CREATE, MPI_INFO_NULL,&thefile);
+
+        MPI_File_write(thefile,header,15,MPI_DOUBLE,MPI_STATUS_IGNORE);
+        disp = myrank*ROW*COL/4*sizeof(double)+15;
+        MPI_File_set_view(thefile,disp,MPI_INT,MPI_INT,"native",MPI_INFO_NULL);
+        for (i=myrank*(ROW/nproc);i<(myrank+1)*(ROW/nproc);i++){
+            for(j=0;j<COL;j++){
+            tmp[0] = i*dx;
+            tmp[1] = j*dy;
+            tmp[2] = p[(i-myrank*(ROW/nproc))*ROW+j];
+            MPI_File_write(thefile,tmp,3,MPI_DOUBLE,MPI_STATUS_IGNORE);
+          }
+        }
+        MPI_File_close(&thefile);
         break;
 
     }
 
-    fclose(stream);
+
 }

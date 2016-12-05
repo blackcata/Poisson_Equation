@@ -102,7 +102,7 @@ int main(int argc, char* argv[])
     //-------------------------------------------------
     BC = 1;
     method = 3;
-    write_type = 1;
+    write_type = 3;
 
     poisson_solver(u,u_anal,tol,omega,BC,method,write_type,dir_name);
     MPI_Finalize();
