@@ -151,6 +151,8 @@ void write_u(char *dir_nm,char *file_nm,int write_type,
     stream=fopen(file_path,"w");
 
     switch (write_type) {
+      case 0:
+
       case 1:
         fprintf(stream,"ZONE I=%d J=%d \n",ROW,COL);
         for (i=0;i<ROW;i++){
@@ -161,7 +163,7 @@ void write_u(char *dir_nm,char *file_nm,int write_type,
         break;
 
       case 2:
-        fprintf(stream,"ZONE I=%d J=%d \n",ROW/nproc,COL);
+        fprintf(stream,"ZONE I=%d J=%d \n",COL,ROW/nproc);
         for (i=myrank*(ROW/nproc);i<(myrank+1)*(ROW/nproc);i++){
             for(j=0;j<COL;j++){
                 fprintf(stream,"%f %f %f \n",i*dx,j*dy,
