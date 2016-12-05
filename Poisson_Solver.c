@@ -5,7 +5,8 @@
 #include "def.h"
 
 void initialization(double **p);
-void write_u(char *dir_nm,char *file_nm, double **p,double dx, double dy);
+void write_u(char *dir_nm,char *file_nm,int write_type,
+             double *p,double dx,double dy);
 
 //-----------------------------------
 // Poisson Solvers - Jacobi, SOR, CG
@@ -30,7 +31,7 @@ void poisson_solver(double **u, double **u_anal, double tol, double omega,
 
   char *file_name ;
 
-  int iter = 0, myrank;
+  int iter = 0, myrank, write_type;
   double Lx = 1.0, Ly = 1.0;
   double dx, dy, err = 0, tot_time = 0;
 
@@ -43,7 +44,7 @@ void poisson_solver(double **u, double **u_anal, double tol, double omega,
   //-----------------------------
   file_name = "Analytic_solution.plt";
   func_anal(u_anal,ROW,COL,dx,dy);
-  write_u(dir_name,file_name,u_anal,dx,dy);
+  // write_u(dir_name,file_name,u_anal,dx,dy);
 
   switch (method) {
     case 1 :
@@ -51,6 +52,7 @@ void poisson_solver(double **u, double **u_anal, double tol, double omega,
       //        Jacobi Method
       //-----------------------------
       file_name = "Jacobi_result.plt";
+      write_type = 0;
 
       initialization(u);
       Jacobi(u,dx,dy,tol,&tot_time,&iter,BC);
@@ -59,7 +61,7 @@ void poisson_solver(double **u, double **u_anal, double tol, double omega,
       if(myrank==0) {
         printf("Jacobi Method - Error : %e, Iteration : %d, Time : %f s \n",
                 err,iter,tot_time);
-        write_u(dir_name,file_name,u,dx,dy);
+        write_u(dir_name,file_name,write_type,u,dx,dy);
       }
       break;
 
@@ -67,7 +69,8 @@ void poisson_solver(double **u, double **u_anal, double tol, double omega,
        //-----------------------------
        //         SOR Method
        //-----------------------------
-        file_name = "SOR_result.plt";
+       file_name = "SOR_result.plt";
+       write_type = 0;
 
        initialization(u);
        SOR(u,dx,dy,tol,omega,&tot_time,&iter,BC);
@@ -76,7 +79,7 @@ void poisson_solver(double **u, double **u_anal, double tol, double omega,
        if(myrank==0) {
          printf("SOR Method - Error : %e, Iteration : %d, Time : %f s \n",
                 err,iter,tot_time);
-         write_u(dir_name,file_name,u,dx,dy);
+         write_u(dir_name,file_name,write_type,u,dx,dy);
        }
       break;
 
@@ -94,7 +97,6 @@ void poisson_solver(double **u, double **u_anal, double tol, double omega,
        if(myrank==0){
          printf("CG method - Error : %e, Iteration : %d, Time : %f s \n",
                   err,iter,tot_time);
-        //  write_u(dir_name,file_name,u,dx,dy);
        }
        break;
   }
@@ -136,7 +138,8 @@ void func_anal(double **p, int row_num, int col_num, double dx, double dy)
             p[i][j] = -1/(2*pow(pi,2))*sin(pi*i*dx)*cos(pi*j*dy); }}
 }
 
-void write_u(char *dir_nm,char *file_nm, double **p,double dx, double dy)
+void write_u(char *dir_nm,char *file_nm,int write_type,
+             double *p,double dx,double dy)
 {
     FILE* stream;
     int i,j;
@@ -147,7 +150,7 @@ void write_u(char *dir_nm,char *file_nm, double **p,double dx, double dy)
     fprintf(stream,"ZONE I=%d J=%d \n",ROW,COL);
     for (i=0;i<ROW;i++){
         for(j=0;j<COL;j++){
-            fprintf(stream,"%f %f %f \n",i*dx,j*dy,p[i][j]);
+            fprintf(stream,"%f %f %f \n",i*dx,j*dy,p[i*ROW+j]);
         }
     }
     fclose(stream);

@@ -7,7 +7,9 @@
 
 #include "def.h"
 
-void write_u(char *dir_nm,char *file_nm, double **p,double dx, double dy);
+void write_u(char *dir_nm,char *file_nm,int write_type,
+             double *p,double dx,double dy);
+
 //-----------------------------------
 //      Matrix Calculations
 //-----------------------------------
@@ -28,7 +30,7 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
                         double *tot_time,int *iter,int BC,
                         char *file_name,char *dir_name)
 {
-    int i,j,k,it,tt;
+    int i,j,k,it,write_type;
     int nproc,myrank,ista,iend;
     double alpha,beta,ts,te;
     double rnew_sum,rnew_sum_loc,rr_sum,rr_sum_loc,rn_sum,rn_sum_loc,
@@ -39,6 +41,7 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
     double *tmp_loc, *b_loc, *r_loc, *r_new_loc, *x_loc, *z_loc;
 
     time_t start_t = 0, end_t = 0;
+    char loc_name[50];
 
     start_t = clock();
     ts = MPI_Wtime();
@@ -114,15 +117,6 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
           //---------------------------------------
           MPI_Allgather(&x_loc[0],ROW*COL/nproc,MPI_DOUBLE,
                       x,ROW*COL/nproc,MPI_DOUBLE,MPI_COMM_WORLD);
-          if (myrank == 0){
-            tt = 0;
-            for (i=0;i<ROW;i++){
-              for (j=0;j<COL;j++){
-                p[i][j] = x[tt];
-                tt += 1;
-              }
-            }
-          }
           *iter = it;
 
           free(b_loc);
@@ -135,9 +129,20 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
           end_t = clock();
           te = MPI_Wtime();
           *tot_time = (double)(end_t - start_t)/(CLOCKS_PER_SEC);
-          if(myrank==0) {
-            printf("Total time is : %f s \n",te-ts );
-            write_u(dir_name,file_name,p,dx,dy);
+          if (myrank==0) printf("Total time is : %f s \n",te-ts );
+
+          write_type = 1;
+          switch (write_type) {
+            case 1 :
+              if(myrank==0) write_u(dir_name,file_name,write_type,x,dx,dy);
+              break;
+
+            case 2 :
+              printf("write_type : %d\n", write_type);
+              sprintf(loc_name,"%d.%s",myrank,file_name);
+              printf("%s\n",loc_name);
+              write_u(dir_name,loc_name,write_type,x,dx,dy);
+              break;
           }
           break;
        }
