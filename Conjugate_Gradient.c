@@ -3,6 +3,7 @@
 #include <time.h>
 #include <math.h>
 #include <mpi.h>
+#include <omp.h>
 
 #include "def.h"
 
@@ -28,7 +29,8 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
     int i,j,k,it,tt;
     int nproc,myrank,ista,iend;
     double alpha,beta,ts,te;
-    double rnew_sum,rnew_sum_loc,rr_sum,rr_sum_loc,rn_sum,rn_sum_loc,zAz_sum,zAz_sum_loc ;
+    double rnew_sum,rnew_sum_loc,rr_sum,rr_sum_loc,rn_sum,rn_sum_loc,
+           zAz_sum,zAz_sum_loc ;
 
     double **A, **L, **R;
     double *tmp, *x, *z, *r, *r_new;

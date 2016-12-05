@@ -54,7 +54,8 @@ void poisson_solver(double **u, double **u_anal, double tol, double omega,
 
       file_name = "Jacobi_result.plt";
       if(myrank==0) {
-        printf("Jacobi Method - Error : %e, Iteration : %d, Time : %f s \n",err,iter,tot_time);
+        printf("Jacobi Method - Error : %e, Iteration : %d, Time : %f s \n",
+                err,iter,tot_time);
         write_u(dir_name,file_name,u,dx,dy);
       }
       break;
@@ -69,7 +70,8 @@ void poisson_solver(double **u, double **u_anal, double tol, double omega,
 
        file_name = "SOR_result.plt";
        if(myrank==0) {
-         printf("SOR Method - Error : %e, Iteration : %d, Time : %f s \n",err,iter,tot_time);
+         printf("SOR Method - Error : %e, Iteration : %d, Time : %f s \n",
+                err,iter,tot_time);
          write_u(dir_name,file_name,u,dx,dy);
        }
       break;
@@ -83,10 +85,11 @@ void poisson_solver(double **u, double **u_anal, double tol, double omega,
        error_rms(u,u_anal,&err);
 
        file_name = "CG_result.plt";
-       
+
        MPI_Barrier(MPI_COMM_WORLD);
        if(myrank==0){
-         printf("CG method - Error : %e, Iteration : %d, Time : %f s \n",err,iter,tot_time);
+         printf("CG method - Error : %e, Iteration : %d, Time : %f s \n",
+                  err,iter,tot_time);
          write_u(dir_name,file_name,u,dx,dy);
        }
        break;
