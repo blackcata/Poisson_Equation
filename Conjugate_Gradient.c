@@ -115,16 +115,7 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
           //---------------------------------------
           //   Redistribute x vector to array
           //---------------------------------------
-          MPI_Allgather(&x_loc[0],ROW*COL/nproc,MPI_DOUBLE,
-                      x,ROW*COL/nproc,MPI_DOUBLE,MPI_COMM_WORLD);
           *iter = it;
-
-          free(b_loc);
-          free(x_loc);
-          free(z_loc);
-          free(tmp_loc);
-          free(r_loc);
-          free(r_new_loc);
 
           end_t = clock();
           te = MPI_Wtime();
@@ -134,16 +125,24 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
           write_type = 1;
           switch (write_type) {
             case 1 :
+              MPI_Allgather(&x_loc[0],ROW*COL/nproc,MPI_DOUBLE,
+                          x,ROW*COL/nproc,MPI_DOUBLE,MPI_COMM_WORLD);
               if(myrank==0) write_u(dir_name,file_name,write_type,x,dx,dy);
               break;
 
             case 2 :
-              printf("write_type : %d\n", write_type);
               sprintf(loc_name,"%d.%s",myrank,file_name);
-              printf("%s\n",loc_name);
-              write_u(dir_name,loc_name,write_type,x,dx,dy);
+              write_u(dir_name,loc_name,write_type,x_loc,dx,dy);
               break;
           }
+
+          free(b_loc);
+          free(x_loc);
+          free(z_loc);
+          free(tmp_loc);
+          free(r_loc);
+          free(r_new_loc);
+
           break;
        }
 
