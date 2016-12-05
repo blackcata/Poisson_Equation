@@ -12,9 +12,11 @@ void write_u(char *dir_nm,char *file_nm,int write_type,
 // Poisson Solvers - Jacobi, SOR, CG
 //-----------------------------------
 void Jacobi(double **p,double dx, double dy, double tol,
-                       double *tot_time, int *iter,int BC);
+            double *tot_time, int *iter,int BC,
+            char* file_name, char* dir_name,int write_type);
 void SOR(double **p,double dx, double dy, double tol, double omega,
-                               double *tot_time,int *iter,int BC);
+         double *tot_time, int *iter,int BC,
+         char* file_name, char* dir_name,int write_type);
 void Conjugate_Gradient(double **p,double dx, double dy, double tol,
                         double *tot_time,int *iter,int BC,
                         char *file_name,char *dir_name);
@@ -52,16 +54,15 @@ void poisson_solver(double **u, double **u_anal, double tol, double omega,
       //        Jacobi Method
       //-----------------------------
       file_name = "Jacobi_result.plt";
-      write_type = 0;
+      write_type = 1;
 
       initialization(u);
-      Jacobi(u,dx,dy,tol,&tot_time,&iter,BC);
+      Jacobi(u,dx,dy,tol,&tot_time,&iter,BC,file_name,dir_name,write_type);
       error_rms(u,u_anal,&err);
 
       if(myrank==0) {
         printf("Jacobi Method - Error : %e, Iteration : %d, Time : %f s \n",
                 err,iter,tot_time);
-        write_u(dir_name,file_name,write_type,u,dx,dy);
       }
       break;
 
@@ -70,16 +71,15 @@ void poisson_solver(double **u, double **u_anal, double tol, double omega,
        //         SOR Method
        //-----------------------------
        file_name = "SOR_result.plt";
-       write_type = 0;
+       write_type = 1;
 
        initialization(u);
-       SOR(u,dx,dy,tol,omega,&tot_time,&iter,BC);
+       SOR(u,dx,dy,tol,omega,&tot_time,&iter,BC,file_name,dir_name,write_type);
        error_rms(u,u_anal,&err);
 
        if(myrank==0) {
          printf("SOR Method - Error : %e, Iteration : %d, Time : %f s \n",
                 err,iter,tot_time);
-         write_u(dir_name,file_name,write_type,u,dx,dy);
        }
       break;
 
@@ -151,8 +151,6 @@ void write_u(char *dir_nm,char *file_nm,int write_type,
     stream=fopen(file_path,"w");
 
     switch (write_type) {
-      case 0:
-
       case 1:
         fprintf(stream,"ZONE I=%d J=%d \n",ROW,COL);
         for (i=0;i<ROW;i++){

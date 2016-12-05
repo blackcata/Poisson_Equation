@@ -7,21 +7,23 @@ double func(int i, int j, double dx, double dy);
 void initialization(double **p);
 
 void Jacobi(double **p,double dx, double dy, double tol,
-                       double *tot_time,int *iter,int BC)
+            double *tot_time, int *iter,int BC,
+            char* file_name, char* dir_name,int write_type)
 {
     int i,j,k,it;
     int Nx,Ny;
     double beta,rms;
     double SUM1,SUM2;
+    double *p_tmp;
     double **p_new;
     time_t start_t =0, end_t =0;
 
     start_t = clock();
     beta = dx/dy;
 
+    p_tmp = (double *) malloc((COL*ROW) *sizeof(double));
     p_new = (double **) malloc(ROW *sizeof(double));
-    for (i=0;i<ROW;i++)
-    {
+    for (i=0;i<ROW;i++){
       p_new[i]      = (double *) malloc(COL * sizeof(double));
     }
     initialization(p_new);
@@ -80,10 +82,19 @@ void Jacobi(double **p,double dx, double dy, double tol,
         }
 
         if ( SUM2/SUM1 < tol ){
-            free(p_new);
+           for (i=0;i<ROW;i++){
+              for (j=0;j<COL;j++){
+                p_tmp[ROW*i+j] = p[i][j];
+              }
+            }
+
             *iter = it;
             end_t = clock();
             *tot_time = (double)(end_t - start_t)/(CLOCKS_PER_SEC);
+            write_u(dir_name,file_name,write_type,p_tmp,dx,dy);
+            
+            free(p_tmp);
+            free(p_new);
             break;
         }
 
@@ -94,7 +105,8 @@ void Jacobi(double **p,double dx, double dy, double tol,
         //------------------------
         for (i=0;i<ROW;i++){
             for (j=0;j<COL;j++){
-                p[i][j] = p_new[i][j];}}
-
+                p[i][j] = p_new[i][j];
+              }
+         }
     }
 }
