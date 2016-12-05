@@ -19,7 +19,7 @@ void SOR(double **p,double dx, double dy, double tol, double omega,
          char* file_name, char* dir_name,int write_type);
 void Conjugate_Gradient(double **p,double dx, double dy, double tol,
                         double *tot_time,int *iter,int BC,
-                        char *file_name,char *dir_name);
+                        char *file_name,char *dir_name,int write_type);
 
 //-----------------------------------
 //        Mathematical tools
@@ -29,11 +29,11 @@ void func_anal(double **p, int row_num, int col_num, double dx, double dy);
 void error_rms(double **p, double **p_anal, double *err);
 
 void poisson_solver(double **u, double **u_anal, double tol, double omega,
-                    int BC, int method, char *dir_name){
+                    int BC, int method, int write_type,char *dir_name){
 
   char *file_name ;
 
-  int iter = 0, myrank, write_type;
+  int iter = 0, myrank;
   double Lx = 1.0, Ly = 1.0;
   double dx, dy, err = 0, tot_time = 0;
 
@@ -54,7 +54,6 @@ void poisson_solver(double **u, double **u_anal, double tol, double omega,
       //        Jacobi Method
       //-----------------------------
       file_name = "Jacobi_result.plt";
-      write_type = 1;
 
       initialization(u);
       Jacobi(u,dx,dy,tol,&tot_time,&iter,BC,file_name,dir_name,write_type);
@@ -71,7 +70,6 @@ void poisson_solver(double **u, double **u_anal, double tol, double omega,
        //         SOR Method
        //-----------------------------
        file_name = "SOR_result.plt";
-       write_type = 1;
 
        initialization(u);
        SOR(u,dx,dy,tol,omega,&tot_time,&iter,BC,file_name,dir_name,write_type);
@@ -90,7 +88,8 @@ void poisson_solver(double **u, double **u_anal, double tol, double omega,
        file_name = "CG_result.plt";
 
        initialization(u);
-       Conjugate_Gradient(u,dx,dy,tol,&tot_time,&iter,BC,file_name,dir_name);
+       Conjugate_Gradient(u,dx,dy,tol,&tot_time,&iter,BC,
+                          file_name,dir_name,write_type);
        error_rms(u,u_anal,&err);
 
        MPI_Barrier(MPI_COMM_WORLD);

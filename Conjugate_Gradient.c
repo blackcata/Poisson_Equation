@@ -28,9 +28,9 @@ double func(int i, int j, double dx, double dy);
 
 void Conjugate_Gradient(double **p,double dx, double dy, double tol,
                         double *tot_time,int *iter,int BC,
-                        char *file_name,char *dir_name)
+                        char *file_name,char *dir_name,int write_type)
 {
-    int i,j,k,it,write_type;
+    int i,j,k,it;
     int nproc,myrank,ista,iend;
     double alpha,beta,ts,te;
     double rnew_sum,rnew_sum_loc,rr_sum,rr_sum_loc,rn_sum,rn_sum_loc,
@@ -110,7 +110,8 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
 
        rnew_sum_loc = pow(norm_L2(ROW*COL/nproc,r_new_loc),2);
        MPI_Allreduce(&rnew_sum_loc,&rnew_sum,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
-      if (myrank==0) printf("cri : %f, tol : %f, \n",sqrt(rnew_sum),tol);
+       if (myrank==0) printf("cri : %f, tol : %f, \n",sqrt(rnew_sum),tol);
+
        if ( sqrt(rnew_sum) < tol ){
           //---------------------------------------
           //   Redistribute x vector to array
@@ -122,7 +123,6 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
           *tot_time = (double)(end_t - start_t)/(CLOCKS_PER_SEC);
           if (myrank==0) printf("Total time is : %f s \n",te-ts );
 
-          write_type = 1;
           switch (write_type) {
             case 1 :
               MPI_Allgather(&x_loc[0],ROW*COL/nproc,MPI_DOUBLE,

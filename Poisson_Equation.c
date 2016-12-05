@@ -28,7 +28,6 @@
 //          both x and y directions.
 //
 
-
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
@@ -42,7 +41,7 @@
 //-----------------------------------
 
 void poisson_solver(double **u, double **u_anal, double tol, double omega,
-                    int BC, int method, char *dir_name);
+                    int BC, int method, int write_type, char *dir_name);
 
 int main(int argc, char* argv[])
 {
@@ -51,7 +50,7 @@ int main(int argc, char* argv[])
 
     char *dir_name ;
 
-    int i, method, BC, myrank;
+    int i, method, BC, myrank, write_type;
     double tol, omega;
 
     MPI_Init(&argc,&argv);
@@ -87,21 +86,25 @@ int main(int argc, char* argv[])
     }
     MPI_Barrier(MPI_COMM_WORLD);
 
-    //----------------------------------------
-    //       Poisson Solver Type
+    //-------------------------------------------------
+    //            Poisson Solver Type
     //
-    // BC = 1 : Boundary condition Case 1
-    //    = 2 : Boundary condition Case 2
+    // BC         = 1 : Boundary condition Case 1
+    //            = 2 : Boundary condition Case 2
     //
-    // method = 1 : Jacobi method
-    //        = 2 : SOR method
-    //        = 3 : Conjugate Gradient method
-    //----------------------------------------
+    // method     = 1 : Jacobi method
+    //            = 2 : SOR method
+    //            = 3 : Conjugate Gradient method
+    //
+    // write_type = 1 : Post Reassembly
+    //            = 2 : Single task I/O
+    //            = 3 : MPI I/O
+    //-------------------------------------------------
     BC = 1;
     method = 3;
+    write_type = 1;
 
-
-    poisson_solver(u,u_anal,tol,omega,BC,method,dir_name);
+    poisson_solver(u,u_anal,tol,omega,BC,method,write_type,dir_name);
     MPI_Finalize();
 
     free(u);
