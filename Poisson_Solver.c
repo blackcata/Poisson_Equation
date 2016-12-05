@@ -15,7 +15,8 @@ void Jacobi(double **p,double dx, double dy, double tol,
 void SOR(double **p,double dx, double dy, double tol, double omega,
                                double *tot_time,int *iter,int BC);
 void Conjugate_Gradient(double **p,double dx, double dy, double tol,
-                                   double *tot_time,int *iter,int BC);
+                        double *tot_time,int *iter,int BC,
+                        char *file_name,char *dir_name);
 
 //-----------------------------------
 //        Mathematical tools
@@ -23,6 +24,7 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
 double func(int i, int j, double dx, double dy);
 void func_anal(double **p, int row_num, int col_num, double dx, double dy);
 void error_rms(double **p, double **p_anal, double *err);
+
 void poisson_solver(double **u, double **u_anal, double tol, double omega,
                     int BC, int method, char *dir_name){
 
@@ -48,11 +50,12 @@ void poisson_solver(double **u, double **u_anal, double tol, double omega,
       //-----------------------------
       //        Jacobi Method
       //-----------------------------
+      file_name = "Jacobi_result.plt";
+
       initialization(u);
       Jacobi(u,dx,dy,tol,&tot_time,&iter,BC);
       error_rms(u,u_anal,&err);
 
-      file_name = "Jacobi_result.plt";
       if(myrank==0) {
         printf("Jacobi Method - Error : %e, Iteration : %d, Time : %f s \n",
                 err,iter,tot_time);
@@ -64,11 +67,12 @@ void poisson_solver(double **u, double **u_anal, double tol, double omega,
        //-----------------------------
        //         SOR Method
        //-----------------------------
+        file_name = "SOR_result.plt";
+
        initialization(u);
        SOR(u,dx,dy,tol,omega,&tot_time,&iter,BC);
        error_rms(u,u_anal,&err);
 
-       file_name = "SOR_result.plt";
        if(myrank==0) {
          printf("SOR Method - Error : %e, Iteration : %d, Time : %f s \n",
                 err,iter,tot_time);
@@ -80,17 +84,17 @@ void poisson_solver(double **u, double **u_anal, double tol, double omega,
        //-----------------------------
        //  Conjugate Gradient Method
        //-----------------------------
-       initialization(u);
-       Conjugate_Gradient(u,dx,dy,tol,&tot_time,&iter,BC);
-       error_rms(u,u_anal,&err);
-
        file_name = "CG_result.plt";
+
+       initialization(u);
+       Conjugate_Gradient(u,dx,dy,tol,&tot_time,&iter,BC,file_name,dir_name);
+       error_rms(u,u_anal,&err);
 
        MPI_Barrier(MPI_COMM_WORLD);
        if(myrank==0){
          printf("CG method - Error : %e, Iteration : %d, Time : %f s \n",
                   err,iter,tot_time);
-         write_u(dir_name,file_name,u,dx,dy);
+        //  write_u(dir_name,file_name,u,dx,dy);
        }
        break;
   }

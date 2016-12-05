@@ -7,6 +7,7 @@
 
 #include "def.h"
 
+void write_u(char *dir_nm,char *file_nm, double **p,double dx, double dy);
 //-----------------------------------
 //      Matrix Calculations
 //-----------------------------------
@@ -24,7 +25,8 @@ void make_Abx(int ista,int iend,double **A,double **L,double **R,
 double func(int i, int j, double dx, double dy);
 
 void Conjugate_Gradient(double **p,double dx, double dy, double tol,
-                                   double *tot_time,int *iter, int BC)
+                        double *tot_time,int *iter,int BC,
+                        char *file_name,char *dir_name)
 {
     int i,j,k,it,tt;
     int nproc,myrank,ista,iend;
@@ -133,7 +135,10 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
           end_t = clock();
           te = MPI_Wtime();
           *tot_time = (double)(end_t - start_t)/(CLOCKS_PER_SEC);
-          if(myrank==0) printf("Total time is : %f s \n",te-ts );
+          if(myrank==0) {
+            printf("Total time is : %f s \n",te-ts );
+            write_u(dir_name,file_name,p,dx,dy);
+          }
           break;
        }
 
