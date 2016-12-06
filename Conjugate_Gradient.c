@@ -253,15 +253,13 @@ void make_Abx(int ista,int iend,double **A,double **L,double **R,
     //--------------------------------
     //        Make Vector b
     //--------------------------------
-    tmp =0;
     #pragma omp parallel for shared(b) private(i,j)
     for (i=ista;i<iend+1;i++){
         for (j=0;j<COL;j++){
           if (i==0 || i==ROW-1 || j==0 || j==COL-1)
-              b[tmp] = 0;//1/(2*pow(pi,2))*func(i,j,dx,dy);
+              b[ROW*(i-ista)+j] = 0;//1/(2*pow(pi,2))*func(i,j,dx,dy);
           else
-              b[tmp] = dx*dx*func(i,j,dx,dy);
-          tmp +=1;
+              b[ROW*(i-ista)+j] = dx*dx*func(i,j,dx,dy);
         }
 
     }
@@ -275,9 +273,9 @@ double norm_L2(int num, double *a)
     int i;
     double sum = 0;
 
-    #pragma omp parallel for reduction(+:sum)
+    #pragma omp parallel for shared(a) private (i) reduction(+:sum)
     for (i=0;i<num;i++){
-        sum = sum + pow(a[i],2);
+        sum += pow(a[i],2);
     }
     return sqrt(sum);
 }
