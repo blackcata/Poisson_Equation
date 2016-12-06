@@ -183,7 +183,7 @@ void write_u(char *dir_nm,char *file_nm,int write_type,
                     MPI_MODE_WRONLY | MPI_MODE_CREATE, MPI_INFO_NULL,&thefile);
 
         MPI_File_write(thefile,header,15,MPI_DOUBLE,MPI_STATUS_IGNORE);
-        disp = myrank*ROW*COL/4*sizeof(double)+15;
+        disp = myrank*ROW*COL/nproc*sizeof(double)+15;
         MPI_File_set_view(thefile,disp,MPI_INT,MPI_INT,"native",MPI_INFO_NULL);
         for (i=myrank*(ROW/nproc);i<(myrank+1)*(ROW/nproc);i++){
             for(j=0;j<COL;j++){
@@ -191,6 +191,7 @@ void write_u(char *dir_nm,char *file_nm,int write_type,
             tmp[1] = j*dy;
             tmp[2] = p[(i-myrank*(ROW/nproc))*ROW+j];
             MPI_File_write(thefile,tmp,3,MPI_DOUBLE,MPI_STATUS_IGNORE);
+         // MPI_File_write(thefile,p,ROW*COL/nproc,MPI_DOUBLE,MPI_STATUS_IGNORE);
           }
         }
         MPI_File_close(&thefile);
