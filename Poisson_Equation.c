@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <mpi.h>
+#include <omp.h>
 
 #include "def.h"
 
@@ -50,10 +51,10 @@ int main(int argc, char* argv[])
 
     char *dir_name ;
 
-    int i, method, BC, myrank, write_type;
+    int i, method, BC, myrank, write_type, provide;
     double tol, omega;
 
-    MPI_Init(&argc,&argv);
+    MPI_Init_thread(&argc,&argv,MPI_THREAD_SINGLE,&provide);
     MPI_Comm_rank(MPI_COMM_WORLD,&myrank);
 
     // --------------------------------------------------------

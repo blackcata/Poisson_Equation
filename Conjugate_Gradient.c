@@ -84,6 +84,7 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
 
     vmdot(myrank,nproc,ROW*COL/nproc,ROW*COL/nproc,L,A,R,x_loc,tmp_loc);
 
+    #pragma omp parallel for shared(r_loc,z_loc,b_loc,tmp_loc) private(i,j)
     for (i=0;i<ROW*COL/nproc;i++){
            r_loc[i] = b_loc[i] - tmp_loc[i];
            z_loc[i] = r_loc[i];
@@ -103,6 +104,7 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
        MPI_Allreduce(&zAz_sum_loc,&zAz_sum,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
        alpha = rr_sum/zAz_sum;
 
+       #pragma omp parallel for shared(x_loc,z_loc,r_new_loc,r_loc,tmp_loc) private(i,j)
        for (i=0;i<ROW*COL/nproc;i++){
                x_loc[i] = x_loc[i] + alpha * z_loc[i];
                r_new_loc[i] = r_loc[i] - alpha*tmp_loc[i];
@@ -113,9 +115,6 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
        if (myrank==0) printf("cri : %f, tol : %f, \n",sqrt(rnew_sum),tol);
 
        if ( sqrt(rnew_sum) < tol ){
-          //---------------------------------------
-          //   Redistribute x vector to array
-          //---------------------------------------
           *iter = it;
 
           end_t = clock();
@@ -126,12 +125,18 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
           time_ws = MPI_Wtime();
           switch (write_type) {
             case 1 :
+              //-----------------------------------------------------------
+              //               Redistribute x vector to array
+              //-----------------------------------------------------------
               MPI_Allgather(&x_loc[0],ROW*COL/nproc,MPI_DOUBLE,
                           x,ROW*COL/nproc,MPI_DOUBLE,MPI_COMM_WORLD);
               if(myrank==0) write_u(dir_name,file_name,write_type,x,dx,dy);
               break;
 
             case 2 :
+            //-----------------------------------------------------------
+            //                   Make each results files
+            //-----------------------------------------------------------
               sprintf(loc_name,"%d.%s",myrank,file_name);
               write_u(dir_name,loc_name,write_type,x_loc,dx,dy);
               break;
@@ -142,6 +147,7 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
           }
           time_we = MPI_Wtime();
           if (myrank==0) printf("Writing time is : %f s \n",time_we-time_ws);
+
           free(b_loc);
           free(x_loc);
           free(z_loc);
@@ -156,6 +162,7 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
        MPI_Allreduce(&rn_sum_loc,&rn_sum,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
        beta = rn_sum/rr_sum;
 
+       #pragma omp parallel for shared(z_loc,r_new_loc,r_loc) private(i,j)
        for (i=0;i<ROW*COL/nproc;i++){
            z_loc[i] = r_new_loc[i] + beta*z_loc[i];
            r_loc[i] = r_new_loc[i];
@@ -236,6 +243,7 @@ void make_Abx(int ista,int iend,double **A,double **L,double **R,
     //         Make Vector x
     //--------------------------------
     tmp = 0;
+    #pragma omp parallel for shared(x,u) private(i,j)
     for (i=ista;i<iend+1;i++){
         for (j=0;j<COL;j++){
             x[tmp] = u[i][j];
@@ -246,6 +254,7 @@ void make_Abx(int ista,int iend,double **A,double **L,double **R,
     //        Make Vector b
     //--------------------------------
     tmp =0;
+    #pragma omp parallel for shared(b) private(i,j)
     for (i=ista;i<iend+1;i++){
         for (j=0;j<COL;j++){
           if (i==0 || i==ROW-1 || j==0 || j==COL-1)
@@ -266,6 +275,7 @@ double norm_L2(int num, double *a)
     int i;
     double sum = 0;
 
+    #pragma omp parallel for reduction(+:sum)
     for (i=0;i<num;i++){
         sum = sum + pow(a[i],2);
     }
@@ -276,6 +286,7 @@ void vmdot(int myrank, int nproc,int row,int col,
            double **L, double **A, double **R,double *x,double *b)
 {
     int i,j,tmp;
+    double sum = 0;
     double *send_l, *recv_l,*send_r, *recv_r;
 
     MPI_Request req1, req2, req3, req4;
@@ -286,11 +297,13 @@ void vmdot(int myrank, int nproc,int row,int col,
     send_r = (double *) malloc(COL * sizeof(double));
     recv_r = (double *) malloc(COL * sizeof(double));
 
+    #pragma omp parallel for shared(send_l,send_r,x) private(i)
     for (i=0;i<COL;i++){
         send_l[i] = x[i];
         send_r[i] = x[row-COL+i];
     }
 
+    #pragma omp parallel for shared(b) private(i)
     for (i=0;i<ROW*COL/nproc;i++){
         b[i] = 0;
     }
@@ -308,10 +321,13 @@ void vmdot(int myrank, int nproc,int row,int col,
     }
 
     // Center calculation
+    #pragma omp parallel for shared(A,x) private(i,j,sum)
     for (i=0;i<row;i++){
+        sum = 0;
         for (j=0;j<col;j++){
-            b[i] = b[i] + A[i][j]*x[j];
+            sum += A[i][j]*x[j];
         }
+        b[i] = sum;
     }
 
     //Left calculation
@@ -346,10 +362,11 @@ void vmdot(int myrank, int nproc,int row,int col,
 double vvdot(int num, double *a, double *b)
 {
     int i;
-    double c = 0;
+    double sum = 0;
 
+    #pragma omp parallel for reduction(+:sum)
     for (i=0;i<num;i++){
-        c = c + a[i]*b[i];
+        sum += a[i]*b[i];
     }
-    return c;
+    return sum;
 }
