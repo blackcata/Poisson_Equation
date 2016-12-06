@@ -26,3 +26,4 @@ MPI technique is applied to each method
   - At new branch 'MPI' branch
   - MPI is used to solve Poisson equation using Conjugate gradient method
   - This case, CG method is based on the dense matrix
+  - MPI I/O is applied to make the results of Conjugate gradient method
