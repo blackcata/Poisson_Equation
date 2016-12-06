@@ -32,7 +32,7 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
 {
     int i,j,k,it;
     int nproc,myrank,ista,iend;
-    double alpha,beta,ts,te;
+    double alpha,beta,ts,te,time_ws,time_we;
     double rnew_sum,rnew_sum_loc,rr_sum,rr_sum_loc,rn_sum,rn_sum_loc,
            zAz_sum,zAz_sum_loc ;
 
@@ -123,6 +123,7 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
           *tot_time = (double)(end_t - start_t)/(CLOCKS_PER_SEC);
           if (myrank==0) printf("Total time is : %f s \n",te-ts );
 
+          time_ws = MPI_Wtime();
           switch (write_type) {
             case 1 :
               MPI_Allgather(&x_loc[0],ROW*COL/nproc,MPI_DOUBLE,
@@ -139,7 +140,8 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
               write_u(dir_name,file_name,write_type,x_loc,dx,dy);
               break;
           }
-
+          time_we = MPI_Wtime();
+          if (myrank==0) printf("Writing time is : %f s \n",time_we-time_ws);
           free(b_loc);
           free(x_loc);
           free(z_loc);
