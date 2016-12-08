@@ -30,7 +30,7 @@ void send_east(double **u,  int nx_mpi, int ny_mpi, MYMPI *mpi_info);
 //                                                                            //
 //----------------------------------------------------------------------------//
 void Jacobi(double **p,double dx, double dy, double tol,
-            double *tot_time, int *iter,int BC,
+            double *tot_time, int *iter, int BC, int mpi_xsize, int mpi_ysize,
             char* file_name, char* dir_name,int write_type)
 {
     int i,j,k,it;
@@ -53,9 +53,6 @@ void Jacobi(double **p,double dx, double dy, double tol,
     MPI_Comm_size(MPI_COMM_WORLD,&mpi_info.nprocs);
     MPI_Comm_rank(MPI_COMM_WORLD,&mpi_info.myrank);
 
-    // This two variables has to be assigned at Poisson_Equation.c
-    int mpi_xsize = 2;
-    int mpi_ysize = 2;
     mpi_setup(ROW,COL,mpi_xsize,mpi_ysize,&mpi_info);
 
     ista = mpi_info.mpirank_x*mpi_info.nx_mpi;

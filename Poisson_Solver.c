@@ -12,7 +12,7 @@ void write_u(char *dir_nm,char *file_nm,int write_type,
 //                    Poisson Solvers - Jacobi, SOR, CG                       //
 //----------------------------------------------------------------------------//
 void Jacobi(double **p,double dx, double dy, double tol,
-            double *tot_time, int *iter,int BC,
+            double *tot_time, int *iter, int BC, int mpi_xsize, int mpi_ysize,
             char* file_name, char* dir_name,int write_type);
 void SOR(double **p,double dx, double dy, double tol, double omega,
          double *tot_time, int *iter,int BC,
@@ -34,7 +34,8 @@ void error_rms(double **p, double **p_anal, double *err);
 //                                                                            //
 //----------------------------------------------------------------------------//
 void poisson_solver(double **u, double **u_anal, double tol, double omega,
-                    int BC, int method, int write_type,char *dir_name){
+                    int BC, int method, int mpi_xsize, int mpi_ysize,
+                    int write_type,char *dir_name){
 
   char *file_name;
 
@@ -61,7 +62,8 @@ void poisson_solver(double **u, double **u_anal, double tol, double omega,
       file_name = "Jacobi_result.plt";
 
       initialization(u);
-      Jacobi(u,dx,dy,tol,&tot_time,&iter,BC,file_name,dir_name,write_type);
+      Jacobi(u,dx,dy,tol,&tot_time,&iter,BC,mpi_xsize,mpi_ysize,
+                                  file_name,dir_name,write_type);
       error_rms(u,u_anal,&err);
 
       if(myrank==0) {

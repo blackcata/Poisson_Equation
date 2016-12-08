@@ -40,7 +40,8 @@
 //                             Productivity tools                             //
 //----------------------------------------------------------------------------//
 void poisson_solver(double **u, double **u_anal, double tol, double omega,
-                    int BC, int method, int write_type, char *dir_name);
+                    int BC, int method, int mpi_xsize, int mpi_ysize,
+                    int write_type,char *dir_name);
 
 //----------------------------------------------------------------------------//
 //                                                                            //
@@ -54,7 +55,7 @@ int main(int argc, char* argv[])
 
     char *dir_name ;
 
-    int i, method, BC, myrank, write_type;
+    int i, method, BC, myrank, write_type, mpi_xsize, mpi_ysize;
     double tol, omega;
 
     MPI_Init(&argc,&argv);
@@ -105,11 +106,15 @@ int main(int argc, char* argv[])
     //            = 2 : Single task I/O                                       //
     //            = 3 : MPI I/O                                               //
     //------------------------------------------------------------------------//
-    BC = 1;
-    method = 1;
+    BC         = 1;
+    method     = 1;
     write_type = 1;
 
-    poisson_solver(u,u_anal,tol,omega,BC,method,write_type,dir_name);
+    mpi_xsize  = 2;
+    mpi_ysize  = 2;
+
+    poisson_solver(u,u_anal,tol,omega,BC,method,mpi_xsize,mpi_ysize,
+                                                           write_type,dir_name);
     MPI_Finalize();
 
     free(u);
