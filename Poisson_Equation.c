@@ -36,13 +36,15 @@
 
 #include "def.h"
 
-//-----------------------------------
-//        Productivity tools
-//-----------------------------------
-
+//----------------------------------------------------------------------------//
+//                             Productivity tools                             //
+//----------------------------------------------------------------------------//
 void poisson_solver(double **u, double **u_anal, double tol, double omega,
                     int BC, int method, int write_type, char *dir_name);
 
+//----------------------------------------------------------------------------//
+//                          Main Poisson Equation                             //
+//----------------------------------------------------------------------------//
 int main(int argc, char* argv[])
 {
     double **u;
@@ -56,9 +58,9 @@ int main(int argc, char* argv[])
     MPI_Init(&argc,&argv);
     MPI_Comm_rank(MPI_COMM_WORLD,&myrank);
 
-    // --------------------------------------------------------
-    //                    Memory allocation
-    // --------------------------------------------------------
+    //------------------------------------------------------------------------//
+    //                           Memory allocation                            //
+    //------------------------------------------------------------------------//
     u      = (double **) malloc(ROW *sizeof(double));
     u_anal = (double **) malloc(ROW *sizeof(double));
 
@@ -68,9 +70,9 @@ int main(int argc, char* argv[])
       u_anal[i] = (double *) malloc(COL * sizeof(double));
     }
 
-    //--------------------
-    //   Initial setting
-    //--------------------
+    //------------------------------------------------------------------------//
+    //                             Initial setting                            //
+    //------------------------------------------------------------------------//
     tol = 1e-6;
     omega = 1.8;
     dir_name = "./RESULT/";
@@ -79,6 +81,7 @@ int main(int argc, char* argv[])
       int make_fold= system("mkdir RESULT");
       printf("\n");
       printf("---------------------------------------- \n");
+      printf("    Poisson Equation Initial Setting \n");
       printf("Nx : %d, Ny : %d\n",ROW,COL);
       printf("Tolerance : %f, Omega : %f \n",tol, omega);
       printf("---------------------------------------- \n");
@@ -86,23 +89,23 @@ int main(int argc, char* argv[])
     }
     MPI_Barrier(MPI_COMM_WORLD);
 
-    //-------------------------------------------------
-    //            Poisson Solver Type
-    //
-    // BC         = 1 : Boundary condition Case 1
-    //            = 2 : Boundary condition Case 2
-    //
-    // method     = 1 : Jacobi method
-    //            = 2 : SOR method
-    //            = 3 : Conjugate Gradient method
-    //
-    // write_type = 1 : Post Reassembly
-    //            = 2 : Single task I/O
-    //            = 3 : MPI I/O
-    //-------------------------------------------------
+    //------------------------------------------------------------------------//
+    //                        Poisson Solver Type                             //
+    //                                                                        //
+    // BC         = 1 : Boundary condition Case 1                             //
+    //            = 2 : Boundary condition Case 2                             //
+    //                                                                        //
+    // method     = 1 : Jacobi method                                         //
+    //            = 2 : SOR method                                            //
+    //            = 3 : Conjugate Gradient method                             //
+    //                                                                        //
+    // write_type = 1 : Post Reassembly                                       //
+    //            = 2 : Single task I/O                                       //
+    //            = 3 : MPI I/O                                               //
+    //------------------------------------------------------------------------//
     BC = 1;
-    method = 3;
-    write_type = 3;
+    method = 1;
+    write_type = 1;
 
     poisson_solver(u,u_anal,tol,omega,BC,method,write_type,dir_name);
     MPI_Finalize();

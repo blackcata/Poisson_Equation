@@ -10,9 +10,9 @@
 void write_u(char *dir_nm,char *file_nm,int write_type,
              double *p,double dx,double dy);
 
-//-----------------------------------
-//      Matrix Calculations
-//-----------------------------------
+//----------------------------------------------------------------------------//
+//                            Matrix Calculations                             //
+//----------------------------------------------------------------------------//
 double norm_L2(int num, double *a);
 double vvdot(int num, double *a, double *b);
 void vmdot(int myrank, int nproc,int row,int col,
@@ -21,9 +21,9 @@ void vmdot(int myrank, int nproc,int row,int col,
 void make_Abx(int ista,int iend,double **A,double **L,double **R,
               double *b,double *x,double**u,double dx,double dy);
 
-//-----------------------------------
-//      Mathematical functions
-//-----------------------------------
+//----------------------------------------------------------------------------//
+//                          Mathematical functions                            //
+//----------------------------------------------------------------------------//
 double func(int i, int j, double dx, double dy);
 
 void Conjugate_Gradient(double **p,double dx, double dy, double tol,
@@ -46,6 +46,9 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
     start_t = clock();
     ts = MPI_Wtime();
 
+    //-----------------------------------------------------------------------//
+    //                              MPI Setting                              //
+    //-----------------------------------------------------------------------//
     MPI_Comm_size(MPI_COMM_WORLD,&nproc);
     MPI_Comm_rank(MPI_COMM_WORLD,&myrank);
     printf("ROW X COL : %d, nproc : %d \n",ROW*COL,ROW*COL/nproc);
@@ -54,6 +57,9 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
     iend = (myrank+1)*(ROW/nproc)-1;
     printf("[ista,iend] : [%d,%d]\n \n",ista,iend );
 
+    //------------------------------------------------------------------------//
+    //                           Memory allocation                            //
+    //------------------------------------------------------------------------//
     A = (double **) malloc(ROW*COL/nproc * sizeof(double));
     L = (double **) malloc(ROW * sizeof(double));
     R = (double **) malloc(ROW * sizeof(double));
@@ -89,9 +95,9 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
            z_loc[i] = r_loc[i];
     }
 
-   //---------------------------------------
-   //   Main Loop of Conjugate_Gradient
-   //---------------------------------------
+   //-------------------------------------------------------------------------//
+   //                Main Loop of Conjugate Gradient Method                   //
+   //-------------------------------------------------------------------------//
    for (it=0;it<itmax;it++)
    {
 
@@ -108,14 +114,17 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
                r_new_loc[i] = r_loc[i] - alpha*tmp_loc[i];
        }
 
+       //---------------------------------------------------------------------//
+       //                        Convergence Criteria                         //
+       //---------------------------------------------------------------------//
        rnew_sum_loc = pow(norm_L2(ROW*COL/nproc,r_new_loc),2);
        MPI_Allreduce(&rnew_sum_loc,&rnew_sum,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
        if (myrank==0) printf("cri : %f, tol : %f, \n",sqrt(rnew_sum),tol);
 
        if ( sqrt(rnew_sum) < tol ){
-          //---------------------------------------
-          //   Redistribute x vector to array
-          //---------------------------------------
+          //------------------------------------------------------------------//
+          //                  Redistribute x vector to array                  //
+          //------------------------------------------------------------------//
           *iter = it;
 
           end_t = clock();
@@ -126,17 +135,26 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
           time_ws = MPI_Wtime();
           switch (write_type) {
             case 1 :
+            //-----------------------------------------------------------------//
+            //                         Post Reassembly                         //
+            //-----------------------------------------------------------------//
               MPI_Allgather(&x_loc[0],ROW*COL/nproc,MPI_DOUBLE,
                           x,ROW*COL/nproc,MPI_DOUBLE,MPI_COMM_WORLD);
               if(myrank==0) write_u(dir_name,file_name,write_type,x,dx,dy);
               break;
 
             case 2 :
+            //-----------------------------------------------------------------//
+            //                          Single Task I/O                        //
+            //-----------------------------------------------------------------//
               sprintf(loc_name,"%d.%s",myrank,file_name);
               write_u(dir_name,loc_name,write_type,x_loc,dx,dy);
               break;
 
             case 3:
+            //-----------------------------------------------------------------//
+            //                            MPI I/O                              //
+            //-----------------------------------------------------------------//
               write_u(dir_name,file_name,write_type,x_loc,dx,dy);
               break;
           }
@@ -156,6 +174,9 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
        MPI_Allreduce(&rn_sum_loc,&rn_sum,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
        beta = rn_sum/rr_sum;
 
+       //---------------------------------------------------------------------//
+       //                               Update                                //
+       //---------------------------------------------------------------------//
        for (i=0;i<ROW*COL/nproc;i++){
            z_loc[i] = r_new_loc[i] + beta*z_loc[i];
            r_loc[i] = r_new_loc[i];
@@ -164,17 +185,17 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
 
 }
 
-//------------------------------------------------------------
-//             Make Stiffness matrix of CG method
-//------------------------------------------------------------
+//----------------------------------------------------------------------------//
+//                     Make Stiffness matrix of CG method                     //
+//----------------------------------------------------------------------------//
 void make_Abx(int ista,int iend,double **A,double **L,double **R,
               double *b,double *x,double**u,double dx,double dy)
 {
     int i,j,k,l,tmp=0,tmp2=0;;
 
-    //--------------------------------
-    //         Make Matrix A
-    //--------------------------------
+    //------------------------------------------------------------------------//
+    //                              Make Matrix A                             //
+    //------------------------------------------------------------------------//
     for (k=ista;k<iend+1;k++){
         tmp2 = 0;
         for (l=ista;l<iend+1;l++){
@@ -217,9 +238,9 @@ void make_Abx(int ista,int iend,double **A,double **L,double **R,
         }
         tmp += 1;
     }
-    //--------------------------------
-    //       Make matrix L,R
-    //--------------------------------
+    //------------------------------------------------------------------------//
+    //                            Make matrix L,R                             //
+    //------------------------------------------------------------------------//
     for (i=0;i<ROW;i++){
       if (i==0 || i==ROW-1){
         L[i][i] = 0;
@@ -231,10 +252,9 @@ void make_Abx(int ista,int iend,double **A,double **L,double **R,
       }
     }
 
-
-    //--------------------------------
-    //         Make Vector x
-    //--------------------------------
+    //------------------------------------------------------------------------//
+    //                              Make Vector x                             //
+    //------------------------------------------------------------------------//
     tmp = 0;
     for (i=ista;i<iend+1;i++){
         for (j=0;j<COL;j++){
@@ -242,9 +262,9 @@ void make_Abx(int ista,int iend,double **A,double **L,double **R,
             tmp += 1;
         }
     }
-    //--------------------------------
-    //        Make Vector b
-    //--------------------------------
+    //------------------------------------------------------------------------//
+    //                              Make Vector b                             //
+    //------------------------------------------------------------------------//
     tmp =0;
     for (i=ista;i<iend+1;i++){
         for (j=0;j<COL;j++){
@@ -254,13 +274,13 @@ void make_Abx(int ista,int iend,double **A,double **L,double **R,
               b[tmp] = dx*dx*func(i,j,dx,dy);
           tmp +=1;
         }
-
     }
 }
 
-//------------------------------------------------------------
-//              Matrix Calcuation Functions
-//------------------------------------------------------------
+//----------------------------------------------------------------------------//
+//                        Matrix Calcuation Functions                         //
+//    -L2 norm, vector-matrix production, vector-vector production functions  //
+//----------------------------------------------------------------------------//
 double norm_L2(int num, double *a)
 {
     int i;
@@ -294,27 +314,32 @@ void vmdot(int myrank, int nproc,int row,int col,
     for (i=0;i<ROW*COL/nproc;i++){
         b[i] = 0;
     }
-
-    // Left exchange
+    //------------------------------------------------------------------------//
+    //                            Left exchange                               //
+    //------------------------------------------------------------------------//
     if (myrank!=0){
       MPI_Irecv(recv_l,COL,MPI_DOUBLE,myrank-1,101,MPI_COMM_WORLD,&req1);
       MPI_Isend(send_l,COL,MPI_DOUBLE,myrank-1,102,MPI_COMM_WORLD,&req2);
     }
-
-    // Right exchange
+    //------------------------------------------------------------------------//
+    //                            Right exchange                              //
+    //------------------------------------------------------------------------//
     if (myrank!=nproc-1){
       MPI_Irecv(recv_r,COL,MPI_DOUBLE,myrank+1,102,MPI_COMM_WORLD,&req3);
       MPI_Isend(send_r,COL,MPI_DOUBLE,myrank+1,101,MPI_COMM_WORLD,&req4);
     }
 
-    // Center calculation
+    //------------------------------------------------------------------------//
+    //                          Center calculation                            //
+    //------------------------------------------------------------------------//
     for (i=0;i<row;i++){
         for (j=0;j<col;j++){
             b[i] = b[i] + A[i][j]*x[j];
         }
     }
-
-    //Left calculation
+    //------------------------------------------------------------------------//
+    //                           Left calculation                             //
+    //------------------------------------------------------------------------//
     if (myrank!=0) MPI_Wait(&req1,&stat1);
     if (myrank!=nproc-1) MPI_Wait(&req4,&stat4);
 
@@ -327,8 +352,9 @@ void vmdot(int myrank, int nproc,int row,int col,
         tmp += 1;
       }
     }
-
-    // Right calculation
+    //------------------------------------------------------------------------//
+    //                          Right calculation                             //
+    //------------------------------------------------------------------------//
     if (myrank!=0) MPI_Wait(&req2,&stat2);
     if (myrank!=nproc-1) MPI_Wait(&req3,&stat3);
 

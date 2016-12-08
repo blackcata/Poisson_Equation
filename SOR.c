@@ -26,7 +26,9 @@ void SOR(double **p,double dx, double dy, double tol, double omega,
     for (i=0;i<ROW;i++){
       p_new[i]      = (double *) malloc(COL * sizeof(double));
     }
-
+    //------------------------------------------------------------------------//
+    //                        Main Loop of SOR method                         //
+    //------------------------------------------------------------------------//
     for (it=1;it<itmax;it++){
         SUM1 = 0;
         SUM2 = 0;
@@ -40,11 +42,13 @@ void SOR(double **p,double dx, double dy, double tol, double omega,
             }
         }
 
-        //------------------------
-        //  Boundary conditions
-        //------------------------
+        //--------------------------------------------------------------------//
+        //                        Boundary conditions                         //
+        //--------------------------------------------------------------------//
 
-        // Boundary - Case 1
+        //--------------------------------------//
+        //           Boundary - Case 1          //
+        //--------------------------------------//
         if (BC == 1){
           for (j=0;j<COL;j++){
               p_new[0][j] = 0;
@@ -56,7 +60,10 @@ void SOR(double **p,double dx, double dy, double tol, double omega,
               p_new[i][COL-1] = p_new[i][COL-2];
           }
         }
-        // Boundary - Case 2
+
+        //--------------------------------------//
+        //           Boundary - Case 2          //
+        //--------------------------------------//
         else if (BC ==2){
           for (j=0;j<COL;j++){
               p_new[0][j] = -1/(2*pow(pi,2))*func(0,j,dx,dy);
@@ -69,9 +76,9 @@ void SOR(double **p,double dx, double dy, double tol, double omega,
           }
         }
 
-        //------------------------
-        //  Convergence Criteria
-        //------------------------
+        //--------------------------------------------------------------------//
+        //                       Convergence Criteria                         //
+        //--------------------------------------------------------------------//
         for (i=1;i<ROW-1;i++){
             for (j=1;j<COL-1;j++){
                 SUM1 += fabs(p_new[i][j]);
@@ -98,9 +105,10 @@ void SOR(double **p,double dx, double dy, double tol, double omega,
             break;
         }
         // printf("Iteration : %d, SUM1 : %f, SUM2 : %f, Ratio : %f \n",it,SUM1,SUM2,SUM2/SUM1);
-        //------------------------
-        //         Update
-        //------------------------
+        
+        //--------------------------------------------------------------------//
+        //                               Update                               //
+        //--------------------------------------------------------------------//
         for (i=0;i<ROW;i++){
             for (j=0;j<COL;j++){
                 p[i][j] = p_new[i][j];}}
