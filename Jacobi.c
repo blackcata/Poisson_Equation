@@ -27,6 +27,7 @@ void Jacobi(double **p,double dx, double dy, double tol,
     double *p_tmp;
     double **p_new;
     time_t start_t =0, end_t =0;
+    MYMPI mpi_info;
 
     start_t = clock();
     beta = dx/dy;
@@ -37,7 +38,18 @@ void Jacobi(double **p,double dx, double dy, double tol,
       p_new[i]      = (double *) malloc(COL * sizeof(double));
     }
     initialization(p_new);
+    //----------------------------------------------------------------------//
+    //                             MPI Setting                              //
+    //----------------------------------------------------------------------//
+    MPI_Comm_size(MPI_COMM_WORLD,&mpi_info.nprocs);
+    MPI_Comm_rank(MPI_COMM_WORLD,&mpi_info.myrank);
+    printf("nrpocs : %d \n",mpi_info.nprocs);
+    printf("myrank : %d \n",mpi_info.myrank);
+    printf("\n");
 
+    //----------------------------------------------------------------------//
+    //                      Main Loop of Jacobi method                      //
+    //----------------------------------------------------------------------//
     for (it=1;it<itmax;it++){
         SUM1 = 0;
         SUM2 = 0;
@@ -50,11 +62,13 @@ void Jacobi(double **p,double dx, double dy, double tol,
             }
         }
 
-        //------------------------
-        //  Boundary conditions
-        //------------------------
+        //------------------------------------------------------------------//
+        //                       Boundary conditions                        //
+        //------------------------------------------------------------------//
 
-        // Boundary - Case 1
+        //--------------------------------------//
+        //           Boundary - Case 1          //
+        //--------------------------------------//
         if (BC == 1){
           for (j=0;j<COL;j++){
               p_new[0][j] = 0;
@@ -66,7 +80,10 @@ void Jacobi(double **p,double dx, double dy, double tol,
               p_new[i][COL-1] = p_new[i][COL-2];
           }
         }
-        // Boundary - Case 2
+
+        //--------------------------------------//
+        //           Boundary - Case 2          //
+        //--------------------------------------//
         else if (BC ==2){
           for (j=0;j<COL;j++){
               p_new[0][j] = -1/(2*pow(pi,2))*func(0,j,dx,dy);
@@ -79,9 +96,9 @@ void Jacobi(double **p,double dx, double dy, double tol,
           }
         }
 
-        //------------------------
-        //  Convergence Criteria
-        //------------------------
+        //------------------------------------------------------------------//
+        //                      Convergence Criteria                        //
+        //------------------------------------------------------------------//
         for (i=1;i<ROW-1;i++){
             for (j=1;j<COL-1;j++){
                 SUM1 += fabs(p_new[i][j]);
@@ -101,18 +118,19 @@ void Jacobi(double **p,double dx, double dy, double tol,
             *iter = it;
             end_t = clock();
             *tot_time = (double)(end_t - start_t)/(CLOCKS_PER_SEC);
-            write_u(dir_name,file_name,write_type,p_tmp,dx,dy);
+            if(mpi_info.myrank==0)
+                             write_u(dir_name,file_name,write_type,p_tmp,dx,dy);
 
             free(p_tmp);
             free(p_new);
             break;
         }
+        // printf("Iteration : %d, SUM1 : %f, SUM2 : %f, Ratio : %f \n",
+        //                     it,SUM1,SUM2,SUM2/SUM1);
 
-        // printf("Iteration : %d, SUM1 : %f, SUM2 : %f, Ratio : %f \n",it,SUM1,SUM2,SUM2/SUM1);
-
-        //------------------------
-        //         Update
-        //------------------------
+        //------------------------------------------------------------------//
+        //                              Update                              //
+        //------------------------------------------------------------------//
         for (i=0;i<ROW;i++){
             for (j=0;j<COL;j++){
                 p[i][j] = p_new[i][j];
