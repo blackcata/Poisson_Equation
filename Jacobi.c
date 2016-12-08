@@ -74,17 +74,17 @@ void Jacobi(double **p,double dx, double dy, double tol,
     //                          Memory Allocation                             //
     //------------------------------------------------------------------------//
     p_tmp = (double *) malloc((COL*ROW/mpi_info.nprocs)*sizeof(double));
-    p_loc = (double **) malloc((ROW/mpi_xsize)*sizeof(double));
-    p_new = (double **) malloc((ROW/mpi_xsize)*sizeof(double));
+    p_loc = (double **) malloc((ROW/mpi_xsize+2)*sizeof(double));
+    p_new = (double **) malloc((ROW/mpi_xsize+2)*sizeof(double));
 
-    for (i=0;i<ROW/mpi_xsize;i++){
-      p_loc[i] = (double *) malloc((COL/mpi_xsize)*sizeof(double));
-      p_new[i] = (double *) malloc((COL/mpi_ysize)*sizeof(double));
+    for (i=0;i<ROW/mpi_xsize+2;i++){
+      p_loc[i] = (double *) malloc((COL/mpi_xsize+2)*sizeof(double));
+      p_new[i] = (double *) malloc((COL/mpi_ysize+2)*sizeof(double));
     }
 
     for (i=ista;i<iend+1;i++){
       for (j=jsta;j<jend+1;j++){
-        p_loc[i-ista][j-jsta] = p[i][j];
+        p_loc[i-ista+1][j-jsta+1] = p[i][j];
       }
     }
 
