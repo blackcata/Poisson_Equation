@@ -8,6 +8,9 @@
 double func(int i, int j, double dx, double dy);
 void initialization(double **p);
 
+//----------------------------------------------------------------------------//
+//                     MPI TYPE, MPI setting functions                        //
+//----------------------------------------------------------------------------//
 typedef struct mympi{
     int rank_sur[4];
     int nprocs;
@@ -15,6 +18,8 @@ typedef struct mympi{
     int nx_mpi,ny_mpi;
     int mpisize_x,mpisize_y,mpirank_x,mpirank_y;
 } MYMPI;
+
+void mpi_setup(int nx, int ny, int mpi_xsize, int mpi_ysize, MYMPI *mpi_info);
 
 void Jacobi(double **p,double dx, double dy, double tol,
             double *tot_time, int *iter,int BC,
@@ -46,6 +51,10 @@ void Jacobi(double **p,double dx, double dy, double tol,
     printf("nrpocs : %d \n",mpi_info.nprocs);
     printf("myrank : %d \n",mpi_info.myrank);
     printf("\n");
+
+    int mpi_xsize = 2;
+    int mpi_ysize = 2;
+    mpi_setup(Nx,Ny,mpi_xsize,mpi_ysize,&mpi_info);
 
     //----------------------------------------------------------------------//
     //                      Main Loop of Jacobi method                      //

@@ -1,6 +1,7 @@
 IC=icc
 TARGET= Poisson_Equation
-OBJECT= Poisson_Equation.o Poisson_Solver.o Jacobi.o SOR.o Conjugate_Gradient.o
+OBJECT= Poisson_Equation.o Poisson_Solver.o Jacobi.o SOR.o Conjugate_Gradient.o\
+				MPI_functions.c
 
 FCFLAGS= -O2 -L$(MPI_HOME)/lib -I$(MPI_HOME)/include -qopenmp
 LDFLAGS= -lmpi
