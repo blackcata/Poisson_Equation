@@ -91,7 +91,7 @@ void Jacobi(double **p,double dx, double dy, double tol,
     //------------------------------------------------------------------------//
     //                       Main Loop of Jacobi method                       //
     //------------------------------------------------------------------------//
-    for (it=1;it<10;it++){
+    for (it=1;it<itmax;it++){
         SUM1_loc = 0;
         SUM2_loc = 0;
 
@@ -123,7 +123,7 @@ void Jacobi(double **p,double dx, double dy, double tol,
              }
            }
 
-           if(ista == ROW-1){
+           if(iend == ROW-1){
              for (j=1;j<=mpi_info.ny_mpi;j++){
                p_new[mpi_info.nx_mpi][j] = 0;
              }
@@ -135,7 +135,7 @@ void Jacobi(double **p,double dx, double dy, double tol,
              }
            }
 
-           if(jsta == COL-1){
+           if(jend == COL-1){
              for (i=1;i<=mpi_info.nx_mpi;i++){
                p_new[i][mpi_info.ny_mpi] = p_new[i][mpi_info.ny_mpi-1];
              }
@@ -169,6 +169,8 @@ void Jacobi(double **p,double dx, double dy, double tol,
                                  - dx*dx*func(i+ista-1,j+jsta-1,dx,dy));
             }
         }
+        // printf("myid : %d, SUM1_loc : %f\n",mpi_info.myrank,SUM1_loc);
+        // printf("myid : %d, SUM2_loc : %f\n",mpi_info.myrank,SUM2_loc);
         MPI_Allreduce(&SUM1_loc,&SUM1,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
         MPI_Allreduce(&SUM2_loc,&SUM2,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
 
@@ -189,8 +191,9 @@ void Jacobi(double **p,double dx, double dy, double tol,
             free(p_new);
             break;
         }
-        printf("Iteration : %d, SUM1 : %f, SUM2 : %f, Ratio : %f \n",
-                           it,SUM1,SUM2,SUM2/SUM1);
+        if(mpi_info.myrank==0)
+            printf("Iteration : %d, SUM1 : %f, SUM2 : %f, Ratio : %f \n",
+                                                       it,SUM1,SUM2,SUM2/SUM1);
 
         //--------------------------------------------------------------------//
         //                               Update                               //
