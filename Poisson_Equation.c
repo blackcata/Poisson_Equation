@@ -43,7 +43,9 @@ void poisson_solver(double **u, double **u_anal, double tol, double omega,
                     int BC, int method, int write_type, char *dir_name);
 
 //----------------------------------------------------------------------------//
+//                                                                            //
 //                          Main Poisson Equation                             //
+//                                                                            //
 //----------------------------------------------------------------------------//
 int main(int argc, char* argv[])
 {

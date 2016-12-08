@@ -28,6 +28,11 @@ double func(int i, int j, double dx, double dy);
 void func_anal(double **p, int row_num, int col_num, double dx, double dy);
 void error_rms(double **p, double **p_anal, double *err);
 
+//----------------------------------------------------------------------------//
+//                                                                            //
+//                      Main Poisson_Solver Subroutine                        //
+//                                                                            //
+//----------------------------------------------------------------------------//
 void poisson_solver(double **u, double **u_anal, double tol, double omega,
                     int BC, int method, int write_type,char *dir_name){
 

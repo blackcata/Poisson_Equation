@@ -24,6 +24,11 @@ void send_south(double *u, int nx_mpi, int ny_mpi, MYMPI *mpi_info);
 void send_west(double *u, int nx_mpi, int ny_mpi, MYMPI *mpi_info);
 void send_east(double *u, int nx_mpi, int ny_mpi, MYMPI *mpi_info);
 
+//----------------------------------------------------------------------------//
+//                                                                            //
+//                           Main Jacobi Subroutine                           //
+//                                                                            //
+//----------------------------------------------------------------------------//
 void Jacobi(double **p,double dx, double dy, double tol,
             double *tot_time, int *iter,int BC,
             char* file_name, char* dir_name,int write_type)

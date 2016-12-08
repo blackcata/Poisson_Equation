@@ -26,6 +26,11 @@ void make_Abx(int ista,int iend,double **A,double **L,double **R,
 //----------------------------------------------------------------------------//
 double func(int i, int j, double dx, double dy);
 
+//----------------------------------------------------------------------------//
+//                                                                            //
+//                    Main Conjugate_Gradient Subroutine                      //
+//                                                                            //
+//----------------------------------------------------------------------------//
 void Conjugate_Gradient(double **p,double dx, double dy, double tol,
                         double *tot_time,int *iter,int BC,
                         char *file_name,char *dir_name,int write_type)

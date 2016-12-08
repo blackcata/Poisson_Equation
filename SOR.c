@@ -7,6 +7,11 @@
 
 double func(int i, int j, double dx, double dy);
 
+//----------------------------------------------------------------------------//
+//                                                                            //
+//                             Main SOR Subroutine                            //
+//                                                                            //
+//----------------------------------------------------------------------------//
 void SOR(double **p,double dx, double dy, double tol, double omega,
          double *tot_time, int *iter,int BC,
          char* file_name, char* dir_name,int write_type)
@@ -105,7 +110,7 @@ void SOR(double **p,double dx, double dy, double tol, double omega,
             break;
         }
         // printf("Iteration : %d, SUM1 : %f, SUM2 : %f, Ratio : %f \n",it,SUM1,SUM2,SUM2/SUM1);
-        
+
         //--------------------------------------------------------------------//
         //                               Update                               //
         //--------------------------------------------------------------------//
