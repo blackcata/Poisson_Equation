@@ -26,7 +26,7 @@ void Jacobi(double **p,double dx, double dy, double tol,
             char* file_name, char* dir_name,int write_type)
 {
     int i,j,k,it;
-    int Nx,Ny;
+    int Nx,Ny,ista,iend,jsta,jend;
     double beta,rms;
     double SUM1,SUM2;
     double *p_tmp;
@@ -48,13 +48,24 @@ void Jacobi(double **p,double dx, double dy, double tol,
     //----------------------------------------------------------------------//
     MPI_Comm_size(MPI_COMM_WORLD,&mpi_info.nprocs);
     MPI_Comm_rank(MPI_COMM_WORLD,&mpi_info.myrank);
-    printf("nrpocs : %d \n",mpi_info.nprocs);
-    printf("myrank : %d \n",mpi_info.myrank);
-    printf("\n");
 
     int mpi_xsize = 2;
     int mpi_ysize = 2;
-    mpi_setup(Nx,Ny,mpi_xsize,mpi_ysize,&mpi_info);
+    mpi_setup(ROW,COL,mpi_xsize,mpi_ysize,&mpi_info);
+
+    ista = mpi_info.mpirank_x*mpi_info.nx_mpi;
+    iend = ista + mpi_info.nx_mpi -1;
+    jsta = mpi_info.mpirank_y*mpi_info.ny_mpi;
+    jend = jsta + mpi_info.ny_mpi -1;
+
+    printf("Myrank : %d\n",mpi_info.myrank);
+    printf("mpirank_x : %d, mpirank_y : %d\n",mpi_info.mpirank_x,mpi_info.mpirank_y);
+    printf("nx_mpi : %d, ny_mpi : %d\n",mpi_info.nx_mpi,mpi_info.ny_mpi);
+    printf("mpisize_x : %d, mpisize_y : %d\n",mpi_info.mpisize_x,mpi_info.mpisize_y);
+    printf("(%d,%d) X (%d,%d)\n",ista,iend,jsta,jend);
+    printf("e_rank : %d, w_rank : %d, s_rank : %d, n_rank : %d \n",
+    mpi_info.rank_sur[0],mpi_info.rank_sur[1],mpi_info.rank_sur[2],mpi_info.rank_sur[3]);
+    printf("\n");
 
     //----------------------------------------------------------------------//
     //                      Main Loop of Jacobi method                      //
