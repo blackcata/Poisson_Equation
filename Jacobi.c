@@ -19,10 +19,10 @@ typedef struct mympi{
 } MYMPI;
 
 void mpi_setup(int nx, int ny, int mpi_xsize, int mpi_ysize, MYMPI *mpi_info);
-void send_north(double *u, int nx_mpi, int ny_mpi, MYMPI *mpi_info);
-void send_south(double *u, int nx_mpi, int ny_mpi, MYMPI *mpi_info);
-void send_west(double *u, int nx_mpi, int ny_mpi, MYMPI *mpi_info);
-void send_east(double *u, int nx_mpi, int ny_mpi, MYMPI *mpi_info);
+void send_north(double **u, int nx_mpi, int ny_mpi, MYMPI *mpi_info);
+void send_south(double **u, int nx_mpi, int ny_mpi, MYMPI *mpi_info);
+void send_west(double **u,  int nx_mpi, int ny_mpi, MYMPI *mpi_info);
+void send_east(double **u,  int nx_mpi, int ny_mpi, MYMPI *mpi_info);
 
 //----------------------------------------------------------------------------//
 //                                                                            //
@@ -91,15 +91,21 @@ void Jacobi(double **p,double dx, double dy, double tol,
     //------------------------------------------------------------------------//
     //                       Main Loop of Jacobi method                       //
     //------------------------------------------------------------------------//
-    for (it=1;it<itmax;it++){
+    for (it=1;it<10;it++){
         SUM1 = 0;
         SUM2 = 0;
 
-        for (i=1;i<ROW-1;i++){
-            for (j=1;j<COL-1;j++){
-            p_new[i][j] =  (p[i+1][j]+p[i-1][j]
-                            + pow(beta,2) *(p[i][j+1]+p[i][j-1])
-                            - dx*dx*func(i,j,dx,dy))/(2*(1+pow(beta,2)));
+        send_north(p_loc, mpi_info.nx_mpi, mpi_info.ny_mpi, &mpi_info);
+        send_south(p_loc, mpi_info.nx_mpi, mpi_info.ny_mpi, &mpi_info);
+        send_west(p_loc,  mpi_info.nx_mpi, mpi_info.ny_mpi, &mpi_info);
+        send_east(p_loc,  mpi_info.nx_mpi, mpi_info.ny_mpi, &mpi_info);
+
+        for (i=2;i<mpi_info.nx_mpi;i++){
+            for (j=2;j<mpi_info.ny_mpi;j++){
+            p_new[i][j] =  (p_loc[i+1][j]+p_loc[i-1][j]
+                            + pow(beta,2) *(p_loc[i][j+1]+p_loc[i][j-1])
+                            - dx*dx*func(i+ista-1,j+jsta-1,dx,dy))
+                                                           /(2*(1+pow(beta,2)));
             }
         }
 

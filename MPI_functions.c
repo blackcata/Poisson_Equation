@@ -43,7 +43,7 @@ void mpi_setup(int nx, int ny, int mpi_xsize, int mpi_ysize, MYMPI *mpi_info)
 //                        Communication subroutines                           //
 //                                              - u is the splitted domain    //
 //----------------------------------------------------------------------------//
-void send_north(double *u, int nx_mpi, int ny_mpi, MYMPI *mpi_info)
+void send_north(double **u, int nx_mpi, int ny_mpi, MYMPI *mpi_info)
 {
     int i;
     double *sendbuf, *recvbuf ;
@@ -54,7 +54,7 @@ void send_north(double *u, int nx_mpi, int ny_mpi, MYMPI *mpi_info)
     recvbuf = (double *) malloc(nx_mpi*sizeof(double));
 
     for (i=1;i<=nx_mpi;i++){
-      sendbuf[i-1] = u[i*(ny_mpi+2) + ny_mpi];
+      sendbuf[i-1] = u[i][ny_mpi];
     }
 
     MPI_Isend(sendbuf,nx_mpi,MPI_DOUBLE,mpi_info->rank_sur[3],101,MPI_COMM_WORLD,&req1);
@@ -63,14 +63,14 @@ void send_north(double *u, int nx_mpi, int ny_mpi, MYMPI *mpi_info)
     MPI_Wait(&req2,&status2);
 
     for (i=1;i<=nx_mpi;i++){
-      u[i*(ny_mpi+2)+0] = recvbuf[i-1];
+      u[i][1] = recvbuf[i-1];
     }
 
     free(sendbuf);
     free(recvbuf);
 }
 
-void send_south(double *u, int nx_mpi, int ny_mpi, MYMPI *mpi_info)
+void send_south(double **u, int nx_mpi, int ny_mpi, MYMPI *mpi_info)
 {
     int i;
     double *sendbuf, *recvbuf ;
@@ -81,7 +81,7 @@ void send_south(double *u, int nx_mpi, int ny_mpi, MYMPI *mpi_info)
     recvbuf = (double *) malloc(nx_mpi*sizeof(double));
 
     for (i=1;i<=nx_mpi;i++){
-      sendbuf[i-1] = u[i*(ny_mpi+2) + 1];
+      sendbuf[i-1] = u[i][1];
     }
 
     MPI_Isend(sendbuf,nx_mpi,MPI_DOUBLE,mpi_info->rank_sur[2],102,MPI_COMM_WORLD,&req1);
@@ -90,14 +90,14 @@ void send_south(double *u, int nx_mpi, int ny_mpi, MYMPI *mpi_info)
     MPI_Wait(&req2,&status2);
 
     for (i=1;i<=nx_mpi;i++){
-      u[i*(ny_mpi+2)+ny_mpi+1] = recvbuf[i-1];
+      u[i][ny_mpi+1] = recvbuf[i-1];
     }
 
     free(sendbuf);
     free(recvbuf);
 }
 
-void send_west(double *u, int nx_mpi, int ny_mpi, MYMPI *mpi_info)
+void send_west(double **u, int nx_mpi, int ny_mpi, MYMPI *mpi_info)
 {
     int j;
     double *sendbuf, *recvbuf ;
@@ -108,7 +108,7 @@ void send_west(double *u, int nx_mpi, int ny_mpi, MYMPI *mpi_info)
     recvbuf = (double *) malloc(ny_mpi*sizeof(double));
 
     for (j=1;j<=ny_mpi;j++){
-      sendbuf[j-1] = u[nx_mpi*(ny_mpi+2)+j];
+      sendbuf[j-1] = u[nx_mpi][j];
     }
 
     MPI_Isend(sendbuf,nx_mpi,MPI_DOUBLE,mpi_info->rank_sur[1],103,MPI_COMM_WORLD,&req1);
@@ -117,14 +117,14 @@ void send_west(double *u, int nx_mpi, int ny_mpi, MYMPI *mpi_info)
     MPI_Wait(&req2,&status2);
 
     for (j=1;j<=nx_mpi;j++){
-      u[0*ny_mpi+2+j] = recvbuf[j-1];
+      u[1][j]= recvbuf[j-1];
     }
 
     free(sendbuf);
     free(recvbuf);
 }
 
-void send_east(double *u, int nx_mpi, int ny_mpi, MYMPI *mpi_info)
+void send_east(double **u, int nx_mpi, int ny_mpi, MYMPI *mpi_info)
 {
     int j;
     double *sendbuf, *recvbuf ;
@@ -135,7 +135,7 @@ void send_east(double *u, int nx_mpi, int ny_mpi, MYMPI *mpi_info)
     recvbuf = (double *) malloc(ny_mpi*sizeof(double));
 
     for (j=1;j<=ny_mpi;j++){
-      sendbuf[j-1] = u[1*(ny_mpi+2)+j];
+      sendbuf[j-1] = u[1][j];
     }
 
     MPI_Isend(sendbuf,nx_mpi,MPI_DOUBLE,mpi_info->rank_sur[0],104,MPI_COMM_WORLD,&req1);
@@ -144,7 +144,7 @@ void send_east(double *u, int nx_mpi, int ny_mpi, MYMPI *mpi_info)
     MPI_Wait(&req2,&status2);
 
     for (j=1;j<=nx_mpi;j++){
-      u[(nx_mpi+1)*(ny_mpi+2)+j] = recvbuf[j-1];
+      u[nx_mpi][j] = recvbuf[j-1];
     }
 
     free(sendbuf);
