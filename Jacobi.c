@@ -2,9 +2,19 @@
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
+#include <mpi.h>
+
 #include "def.h"
 double func(int i, int j, double dx, double dy);
 void initialization(double **p);
+
+typedef struct mympi{
+    int rank_sur[4];
+    int nprocs;
+    int myrank;
+    int nx_mpi,ny_mpi;
+    int mpisize_x,mpisize_y,mpirank_x,mpirank_y;
+} MYMPI;
 
 void Jacobi(double **p,double dx, double dy, double tol,
             double *tot_time, int *iter,int BC,
@@ -92,7 +102,7 @@ void Jacobi(double **p,double dx, double dy, double tol,
             end_t = clock();
             *tot_time = (double)(end_t - start_t)/(CLOCKS_PER_SEC);
             write_u(dir_name,file_name,write_type,p_tmp,dx,dy);
-            
+
             free(p_tmp);
             free(p_new);
             break;
