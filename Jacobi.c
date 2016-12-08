@@ -41,18 +41,13 @@ void Jacobi(double **p,double dx, double dy, double tol,
     start_t = clock();
     beta = dx/dy;
 
-    p_tmp = (double *) malloc((COL*ROW) *sizeof(double));
-    p_new = (double **) malloc(ROW *sizeof(double));
-    for (i=0;i<ROW;i++){
-      p_new[i]      = (double *) malloc(COL * sizeof(double));
-    }
-    initialization(p_new);
     //----------------------------------------------------------------------//
     //                             MPI Setting                              //
     //----------------------------------------------------------------------//
     MPI_Comm_size(MPI_COMM_WORLD,&mpi_info.nprocs);
     MPI_Comm_rank(MPI_COMM_WORLD,&mpi_info.myrank);
 
+    // This two variables has to be assigned at Poisson_Equation.c
     int mpi_xsize = 2;
     int mpi_ysize = 2;
     mpi_setup(ROW,COL,mpi_xsize,mpi_ysize,&mpi_info);
@@ -71,9 +66,19 @@ void Jacobi(double **p,double dx, double dy, double tol,
     mpi_info.rank_sur[0],mpi_info.rank_sur[1],mpi_info.rank_sur[2],mpi_info.rank_sur[3]);
     printf("\n");
 
-    //----------------------------------------------------------------------//
-    //                      Main Loop of Jacobi method                      //
-    //----------------------------------------------------------------------//
+    //------------------------------------------------------------------------//
+    //                          Memory Allocation                             //
+    //------------------------------------------------------------------------//
+    p_tmp = (double *) malloc((COL*ROW/mpi_info.nprocs)*sizeof(double));
+    p_new = (double **) malloc((ROW/mpi_xsize)*sizeof(double));
+    for (i=0;i<ROW;i++){
+      p_new[i] = (double *) malloc((COL/mpi_ysize)*sizeof(double));
+    }
+    initialization(p_new);
+
+    //------------------------------------------------------------------------//
+    //                       Main Loop of Jacobi method                       //
+    //------------------------------------------------------------------------//
     for (it=1;it<itmax;it++){
         SUM1 = 0;
         SUM2 = 0;
@@ -86,9 +91,9 @@ void Jacobi(double **p,double dx, double dy, double tol,
             }
         }
 
-        //------------------------------------------------------------------//
-        //                       Boundary conditions                        //
-        //------------------------------------------------------------------//
+        //--------------------------------------------------------------------//
+        //                        Boundary conditions                         //
+        //--------------------------------------------------------------------//
 
         //--------------------------------------//
         //           Boundary - Case 1          //
@@ -120,9 +125,9 @@ void Jacobi(double **p,double dx, double dy, double tol,
           }
         }
 
-        //------------------------------------------------------------------//
-        //                      Convergence Criteria                        //
-        //------------------------------------------------------------------//
+        //--------------------------------------------------------------------//
+        //                        Convergence Criteria                        //
+        //--------------------------------------------------------------------//
         for (i=1;i<ROW-1;i++){
             for (j=1;j<COL-1;j++){
                 SUM1 += fabs(p_new[i][j]);
@@ -152,9 +157,9 @@ void Jacobi(double **p,double dx, double dy, double tol,
         // printf("Iteration : %d, SUM1 : %f, SUM2 : %f, Ratio : %f \n",
         //                     it,SUM1,SUM2,SUM2/SUM1);
 
-        //------------------------------------------------------------------//
-        //                              Update                              //
-        //------------------------------------------------------------------//
+        //--------------------------------------------------------------------//
+        //                               Update                               //
+        //--------------------------------------------------------------------//
         for (i=0;i<ROW;i++){
             for (j=0;j<COL;j++){
                 p[i][j] = p_new[i][j];
