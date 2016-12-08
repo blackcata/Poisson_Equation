@@ -6,7 +6,6 @@
 
 #include "def.h"
 double func(int i, int j, double dx, double dy);
-void initialization(double **p);
 
 //----------------------------------------------------------------------------//
 //                     MPI TYPE, MPI setting functions                        //
@@ -34,7 +33,7 @@ void Jacobi(double **p,double dx, double dy, double tol,
     double beta,rms;
     double SUM1,SUM2;
     double *p_tmp;
-    double **p_new;
+    double **p_new, **p_loc;
     time_t start_t =0, end_t =0;
     MYMPI mpi_info;
 
@@ -70,11 +69,19 @@ void Jacobi(double **p,double dx, double dy, double tol,
     //                          Memory Allocation                             //
     //------------------------------------------------------------------------//
     p_tmp = (double *) malloc((COL*ROW/mpi_info.nprocs)*sizeof(double));
+    p_loc = (double **) malloc((ROW/mpi_xsize)*sizeof(double));
     p_new = (double **) malloc((ROW/mpi_xsize)*sizeof(double));
-    for (i=0;i<ROW;i++){
+
+    for (i=0;i<ROW/mpi_xsize;i++){
+      p_loc[i] = (double *) malloc((COL/mpi_xsize)*sizeof(double));
       p_new[i] = (double *) malloc((COL/mpi_ysize)*sizeof(double));
     }
-    initialization(p_new);
+
+    for (i=ista;i<iend+1;i++){
+      for (j=jsta;j<jend+1;j++){
+        p_loc[i-ista][j-jsta] = p[i][j];
+      }
+    }
 
     //------------------------------------------------------------------------//
     //                       Main Loop of Jacobi method                       //
