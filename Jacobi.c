@@ -36,7 +36,7 @@ void Jacobi(double **p,double dx, double dy, double tol,
     int i,j,k,it;
     int Nx,Ny,ista,iend,jsta,jend;
     double beta,rms;
-    double SUM1,SUM2;
+    double SUM1 = 0,SUM2 = 0,SUM1_loc,SUM2_loc;
     double *p_tmp;
     double **p_new, **p_loc;
     time_t start_t =0, end_t =0;
@@ -92,8 +92,8 @@ void Jacobi(double **p,double dx, double dy, double tol,
     //                       Main Loop of Jacobi method                       //
     //------------------------------------------------------------------------//
     for (it=1;it<10;it++){
-        SUM1 = 0;
-        SUM2 = 0;
+        SUM1_loc = 0;
+        SUM2_loc = 0;
 
         send_north(p_loc, mpi_info.nx_mpi, mpi_info.ny_mpi, &mpi_info);
         send_south(p_loc, mpi_info.nx_mpi, mpi_info.ny_mpi, &mpi_info);
@@ -160,34 +160,37 @@ void Jacobi(double **p,double dx, double dy, double tol,
         //--------------------------------------------------------------------//
         //                        Convergence Criteria                        //
         //--------------------------------------------------------------------//
-        for (i=1;i<ROW-1;i++){
-            for (j=1;j<COL-1;j++){
-                SUM1 += fabs(p_new[i][j]);
-                SUM2 += fabs(p_new[i+1][j] + p_new[i-1][j]
-                             + pow(beta,2)*(p_new[i][j+1] + p_new[i][j-1])
-                             - (2+2*pow(beta,2))*p_new[i][j]-dx*dx*func(i,j,dx,dy));
+        for (i=2;i<mpi_info.nx_mpi;i++){
+            for (j=2;j<mpi_info.ny_mpi;j++){
+                SUM1_loc += fabs(p_new[i][j]);
+                SUM2_loc += fabs(p_new[i+1][j] + p_new[i-1][j]
+                                 + pow(beta,2)*(p_new[i][j+1] + p_new[i][j-1])
+                                 - (2+2*pow(beta,2))*p_new[i][j]
+                                 - dx*dx*func(i+ista-1,j+jsta-1,dx,dy));
             }
         }
+        MPI_Allreduce(&SUM1_loc,&SUM1,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+        MPI_Allreduce(&SUM2_loc,&SUM2,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
 
         if ( SUM2/SUM1 < tol ){
-           for (i=0;i<ROW;i++){
-              for (j=0;j<COL;j++){
-                p_tmp[ROW*i+j] = p[i][j];
+          for (i=1;i<=mpi_info.nx_mpi;i++){
+              for (j=1;j<=mpi_info.ny_mpi;j++){
+                  p_tmp[mpi_info.nx_mpi*i+j] = p_new[i][j];
               }
             }
 
             *iter = it;
             end_t = clock();
             *tot_time = (double)(end_t - start_t)/(CLOCKS_PER_SEC);
-            if(mpi_info.myrank==0)
-                             write_u(dir_name,file_name,write_type,p_tmp,dx,dy);
+            // if(mpi_info.myrank==0)
+            //                  write_u(dir_name,file_name,write_type,p_tmp,dx,dy);
 
             free(p_tmp);
             free(p_new);
             break;
         }
-        // printf("Iteration : %d, SUM1 : %f, SUM2 : %f, Ratio : %f \n",
-        //                    it,SUM1,SUM2,SUM2/SUM1);
+        printf("Iteration : %d, SUM1 : %f, SUM2 : %f, Ratio : %f \n",
+                           it,SUM1,SUM2,SUM2/SUM1);
 
         //--------------------------------------------------------------------//
         //                               Update                               //
