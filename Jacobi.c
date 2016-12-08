@@ -100,8 +100,8 @@ void Jacobi(double **p,double dx, double dy, double tol,
         send_west(p_loc,  mpi_info.nx_mpi, mpi_info.ny_mpi, &mpi_info);
         send_east(p_loc,  mpi_info.nx_mpi, mpi_info.ny_mpi, &mpi_info);
 
-        for (i=2;i<mpi_info.nx_mpi;i++){
-            for (j=2;j<mpi_info.ny_mpi;j++){
+        for (i=1;i<=mpi_info.nx_mpi;i++){
+            for (j=1;j<=mpi_info.ny_mpi;j++){
             p_new[i][j] =  (p_loc[i+1][j]+p_loc[i-1][j]
                             + pow(beta,2) *(p_loc[i][j+1]+p_loc[i][j-1])
                             - dx*dx*func(i+ista-1,j+jsta-1,dx,dy))
@@ -117,17 +117,31 @@ void Jacobi(double **p,double dx, double dy, double tol,
         //           Boundary - Case 1          //
         //--------------------------------------//
         if (BC == 1){
-          for (j=0;j<COL;j++){
-              p_new[0][j] = 0;
-              p_new[ROW-1][j] = 0;
+          if(ista == 0){
+            for (j=1;j<=mpi_info.ny_mpi;j++){
+              p_new[1][j] = 0;
+            }
           }
 
-          for (i=0;i<ROW;i++) {
-              p_new[i][0] = p_new[i][1];
-              p_new[i][COL-1] = p_new[i][COL-2];
-          }
+           if(ista == ROW-1){
+             for (j=1;j<=mpi_info.ny_mpi;j++){
+               p_new[mpi_info.nx_mpi][j] = 0;
+             }
+           }
+
+           if(jsta == 0){
+             for (i=1;i<=mpi_info.nx_mpi;i++){
+               p_new[i][1] = p_new[i][2];
+             }
+           }
+
+            if(jsta == COL-1){
+              for (i=1;i<=mpi_info.nx_mpi;i++){
+                p_new[i][mpi_info.ny_mpi] = p_new[i][mpi_info.ny_mpi-1];
+              }
+            }
+
         }
-
         //--------------------------------------//
         //           Boundary - Case 2          //
         //--------------------------------------//
