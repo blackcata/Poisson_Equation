@@ -20,6 +20,10 @@ typedef struct mympi{
 } MYMPI;
 
 void mpi_setup(int nx, int ny, int mpi_xsize, int mpi_ysize, MYMPI *mpi_info);
+void send_north(double *u, int nx_mpi, int ny_mpi, MYMPI *mpi_info);
+void send_south(double *u, int nx_mpi, int ny_mpi, MYMPI *mpi_info);
+void send_west(double *u, int nx_mpi, int ny_mpi, MYMPI *mpi_info);
+void send_east(double *u, int nx_mpi, int ny_mpi, MYMPI *mpi_info);
 
 void Jacobi(double **p,double dx, double dy, double tol,
             double *tot_time, int *iter,int BC,
