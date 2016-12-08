@@ -117,11 +117,11 @@ void Jacobi(double **p,double dx, double dy, double tol,
         //           Boundary - Case 1          //
         //--------------------------------------//
         if (BC == 1){
-          if(ista == 0){
-            for (j=1;j<=mpi_info.ny_mpi;j++){
-              p_new[1][j] = 0;
-            }
-          }
+           if(ista == 0){
+             for (j=1;j<=mpi_info.ny_mpi;j++){
+               p_new[1][j] = 0;
+             }
+           }
 
            if(ista == ROW-1){
              for (j=1;j<=mpi_info.ny_mpi;j++){
@@ -135,11 +135,11 @@ void Jacobi(double **p,double dx, double dy, double tol,
              }
            }
 
-            if(jsta == COL-1){
-              for (i=1;i<=mpi_info.nx_mpi;i++){
-                p_new[i][mpi_info.ny_mpi] = p_new[i][mpi_info.ny_mpi-1];
-              }
-            }
+           if(jsta == COL-1){
+             for (i=1;i<=mpi_info.nx_mpi;i++){
+               p_new[i][mpi_info.ny_mpi] = p_new[i][mpi_info.ny_mpi-1];
+             }
+           }
 
         }
         //--------------------------------------//
@@ -187,15 +187,15 @@ void Jacobi(double **p,double dx, double dy, double tol,
             break;
         }
         // printf("Iteration : %d, SUM1 : %f, SUM2 : %f, Ratio : %f \n",
-        //                     it,SUM1,SUM2,SUM2/SUM1);
+        //                    it,SUM1,SUM2,SUM2/SUM1);
 
         //--------------------------------------------------------------------//
         //                               Update                               //
         //--------------------------------------------------------------------//
-        for (i=0;i<ROW;i++){
-            for (j=0;j<COL;j++){
-                p[i][j] = p_new[i][j];
-              }
-         }
+        for (i=1;i<=mpi_info.nx_mpi;i++){
+            for (j=1;j<=mpi_info.ny_mpi;j++){
+              p_loc[i][j] = p_new[i][j];
+            }
+        }
     }
 }
