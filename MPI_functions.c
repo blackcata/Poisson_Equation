@@ -63,7 +63,7 @@ void send_north(double **u, int nx_mpi, int ny_mpi, MYMPI *mpi_info)
     MPI_Wait(&req2,&status2);
 
     for (i=1;i<=nx_mpi;i++){
-      u[i][1] = recvbuf[i-1];
+      u[i][0] = recvbuf[i-1];
     }
 
     free(sendbuf);
@@ -117,7 +117,7 @@ void send_west(double **u, int nx_mpi, int ny_mpi, MYMPI *mpi_info)
     MPI_Wait(&req2,&status2);
 
     for (j=1;j<=nx_mpi;j++){
-      u[1][j]= recvbuf[j-1];
+      u[0][j]= recvbuf[j-1];
     }
 
     free(sendbuf);
@@ -144,7 +144,7 @@ void send_east(double **u, int nx_mpi, int ny_mpi, MYMPI *mpi_info)
     MPI_Wait(&req2,&status2);
 
     for (j=1;j<=nx_mpi;j++){
-      u[nx_mpi][j] = recvbuf[j-1];
+      u[nx_mpi+1][j] = recvbuf[j-1];
     }
 
     free(sendbuf);
