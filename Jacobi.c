@@ -40,6 +40,8 @@ void Jacobi(double **p,double dx, double dy, double tol,
     double *p_tmp;
     double **p_new, **p_loc;
     time_t start_t =0, end_t =0;
+    char loc_name[50],file_path[50];
+    FILE* stream;
     MYMPI mpi_info;
 
     start_t = clock();
@@ -169,30 +171,39 @@ void Jacobi(double **p,double dx, double dy, double tol,
                                  - dx*dx*func(i+ista-1,j+jsta-1,dx,dy));
             }
         }
-        // printf("myid : %d, SUM1_loc : %f\n",mpi_info.myrank,SUM1_loc);
-        // printf("myid : %d, SUM2_loc : %f\n",mpi_info.myrank,SUM2_loc);
+
         MPI_Allreduce(&SUM1_loc,&SUM1,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
         MPI_Allreduce(&SUM2_loc,&SUM2,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
 
         if ( SUM2/SUM1 < tol ){
-          for (i=1;i<=mpi_info.nx_mpi;i++){
-              for (j=1;j<=mpi_info.ny_mpi;j++){
-                  p_tmp[mpi_info.nx_mpi*i+j] = p_new[i][j];
-              }
-            }
 
             *iter = it;
             end_t = clock();
             *tot_time = (double)(end_t - start_t)/(CLOCKS_PER_SEC);
-            // if(mpi_info.myrank==0)
-            //                  write_u(dir_name,file_name,write_type,p_tmp,dx,dy);
+
+            //----------------------------------------------------------------//
+            //                      Writing functions                         //
+            //----------------------------------------------------------------//
+            sprintf(loc_name,"%d.%s",mpi_info.myrank,file_name);
+            sprintf(file_path,"%s%s",dir_name,loc_name);
+            printf("%s %s\n",loc_name,file_path);
+
+            stream=fopen(file_path,"w");
+            fprintf(stream,"ZONE I=%d J=%d \n",mpi_info.nx_mpi,mpi_info.ny_mpi);
+            for (i=1;i<=mpi_info.nx_mpi;i++){
+                for (j=1;j<=mpi_info.ny_mpi;j++){
+                    fprintf(stream,"%f %f %f \n",(i+ista-1)*dx,(j+jsta-1)*dy,
+                                                 p_new[i][j]);
+                }
+            }
+            fclose(stream);
 
             free(p_tmp);
             free(p_new);
             break;
         }
         if(mpi_info.myrank==0)
-            printf("Iteration : %d, SUM1 : %f, SUM2 : %f, Ratio : %f \n",
+         printf("Iteration : %d, SUM1 : %f, SUM2 : %f, Ratio : %f \n",
                                                        it,SUM1,SUM2,SUM2/SUM1);
 
         //--------------------------------------------------------------------//
