@@ -111,12 +111,12 @@ void send_west(double **u, int nx_mpi, int ny_mpi, MYMPI *mpi_info)
       sendbuf[j-1] = u[nx_mpi][j];
     }
 
-    MPI_Isend(sendbuf,nx_mpi,MPI_DOUBLE,mpi_info->rank_sur[1],103,MPI_COMM_WORLD,&req1);
-    MPI_Irecv(recvbuf,nx_mpi,MPI_DOUBLE,mpi_info->rank_sur[0],103,MPI_COMM_WORLD,&req2);
+    MPI_Isend(sendbuf,ny_mpi,MPI_DOUBLE,mpi_info->rank_sur[1],103,MPI_COMM_WORLD,&req1);
+    MPI_Irecv(recvbuf,ny_mpi,MPI_DOUBLE,mpi_info->rank_sur[0],103,MPI_COMM_WORLD,&req2);
     MPI_Wait(&req1,&status1);
     MPI_Wait(&req2,&status2);
 
-    for (j=1;j<=nx_mpi;j++){
+    for (j=1;j<=ny_mpi;j++){
       u[0][j]= recvbuf[j-1];
     }
 
@@ -138,12 +138,12 @@ void send_east(double **u, int nx_mpi, int ny_mpi, MYMPI *mpi_info)
       sendbuf[j-1] = u[1][j];
     }
 
-    MPI_Isend(sendbuf,nx_mpi,MPI_DOUBLE,mpi_info->rank_sur[0],104,MPI_COMM_WORLD,&req1);
-    MPI_Irecv(recvbuf,nx_mpi,MPI_DOUBLE,mpi_info->rank_sur[1],104,MPI_COMM_WORLD,&req2);
+    MPI_Isend(sendbuf,ny_mpi,MPI_DOUBLE,mpi_info->rank_sur[0],104,MPI_COMM_WORLD,&req1);
+    MPI_Irecv(recvbuf,ny_mpi,MPI_DOUBLE,mpi_info->rank_sur[1],104,MPI_COMM_WORLD,&req2);
     MPI_Wait(&req1,&status1);
     MPI_Wait(&req2,&status2);
 
-    for (j=1;j<=nx_mpi;j++){
+    for (j=1;j<=ny_mpi;j++){
       u[nx_mpi+1][j] = recvbuf[j-1];
     }
 

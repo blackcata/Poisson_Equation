@@ -77,7 +77,7 @@ void Jacobi(double **p,double dx, double dy, double tol,
     p_new = (double **) malloc((ROW/mpi_xsize+2)*sizeof(double));
 
     for (i=0;i<ROW/mpi_xsize+2;i++){
-      p_loc[i] = (double *) malloc((COL/mpi_xsize+2)*sizeof(double));
+      p_loc[i] = (double *) malloc((COL/mpi_ysize+2)*sizeof(double));
       p_new[i] = (double *) malloc((COL/mpi_ysize+2)*sizeof(double));
     }
 
@@ -168,7 +168,6 @@ void Jacobi(double **p,double dx, double dy, double tol,
                                  - dx*dx*func(i+ista-1,j+jsta-1,dx,dy));
             }
         }
-
         MPI_Allreduce(&SUM1_loc,&SUM1,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
         MPI_Allreduce(&SUM2_loc,&SUM2,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
 
@@ -186,7 +185,7 @@ void Jacobi(double **p,double dx, double dy, double tol,
             printf("%s %s\n",loc_name,file_path);
 
             stream=fopen(file_path,"w");
-            fprintf(stream,"ZONE I=%d J=%d \n",mpi_info.nx_mpi,mpi_info.ny_mpi);
+            fprintf(stream,"ZONE I=%d J=%d \n",mpi_info.ny_mpi,mpi_info.nx_mpi);
             for (i=1;i<=mpi_info.nx_mpi;i++){
                 for (j=1;j<=mpi_info.ny_mpi;j++){
                     fprintf(stream,"%f %f %f \n",(i+ista-1)*dx,(j+jsta-1)*dy,
