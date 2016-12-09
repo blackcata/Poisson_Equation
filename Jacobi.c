@@ -145,15 +145,32 @@ void Jacobi(double **p,double dx, double dy, double tol,
         //           Boundary - Case 2          //
         //--------------------------------------//
         else if (BC ==2){
-          for (j=0;j<COL;j++){
-              p_new[0][j] = -1/(2*pow(pi,2))*func(0,j,dx,dy);
-              p_new[ROW-1][j] = -1/(2*pow(pi,2))*func(ROW-1,j,dx,dy);
+          if(ista == 0){
+            for (j=1;j<=mpi_info.ny_mpi;j++){
+              p_new[1][j] = -1/(2*pow(pi,2))*func(ista,j+jsta-1,dx,dy);
+            }
           }
 
-          for (i=0;i<ROW;i++) {
-              p_new[i][0] = -1/(2*pow(pi,2))*func(i,0,dx,dy);
-              p_new[i][COL-1] = -1/(2*pow(pi,2))*func(i,COL-1,dx,dy);
+          if(iend == ROW-1){
+            for (j=1;j<=mpi_info.ny_mpi;j++){
+              p_new[mpi_info.nx_mpi][j] = -1/(2*pow(pi,2))
+                                   *func(mpi_info.nx_mpi-1+ista,j+jsta-1,dx,dy);
+            }
           }
+
+          if(jsta == 0){
+            for (i=1;i<=mpi_info.nx_mpi;i++){
+              p_new[i][1] = -1/(2*pow(pi,2))*func(i+ista-1,jsta,dx,dy);
+            }
+          }
+
+          if(jend == COL-1){
+            for (i=1;i<=mpi_info.nx_mpi;i++){
+              p_new[i][mpi_info.ny_mpi] = -1/(2*pow(pi,2))
+                                   *func(i+ista-1,mpi_info.ny_mpi+jsta-1,dx,dy);
+            }
+          }
+
         }
 
         //--------------------------------------------------------------------//
