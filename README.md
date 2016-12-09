@@ -25,5 +25,7 @@ OpenMP technique is applied to each method except SOR
 MPI technique is applied to each method
   - At new branch 'MPI' branch
   - MPI is used to solve Poisson equation using Conjugate gradient method
+  - MPI is also used to solve Poisson equation using Jacobi and SOR method to
+    - SOR is modified to red-black SOR because MPI cannot be applied to SOR.
   - This case, CG method is based on the dense matrix
   - MPI I/O is applied to make the results of Conjugate gradient method
