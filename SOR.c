@@ -70,11 +70,24 @@ void SOR(double **p,double dx, double dy, double tol, double omega,
     mpi_info.rank_sur[0],mpi_info.rank_sur[1],mpi_info.rank_sur[2],mpi_info.rank_sur[3]);
     printf("\n");
 
-    p_tmp = (double *) malloc((COL*ROW) *sizeof(double));
-    p_new = (double **) malloc(ROW *sizeof(double));
-    for (i=0;i<ROW;i++){
-      p_new[i]      = (double *) malloc(COL * sizeof(double));
+    //------------------------------------------------------------------------//
+    //                          Memory Allocation                             //
+    //------------------------------------------------------------------------//
+    p_tmp = (double *) malloc((COL*ROW/mpi_info.nprocs)*sizeof(double));
+    p_loc = (double **) malloc((ROW/mpi_xsize+2)*sizeof(double));
+    p_new = (double **) malloc((ROW/mpi_xsize+2)*sizeof(double));
+
+    for (i=0;i<ROW/mpi_xsize+2;i++){
+      p_loc[i] = (double *) malloc((COL/mpi_ysize+2)*sizeof(double));
+      p_new[i] = (double *) malloc((COL/mpi_ysize+2)*sizeof(double));
     }
+
+    for (i=ista;i<iend+1;i++){
+      for (j=jsta;j<jend+1;j++){
+        p_loc[i-ista+1][j-jsta+1] = p[i][j];
+      }
+    }
+
     //------------------------------------------------------------------------//
     //                        Main Loop of SOR method                         //
     //------------------------------------------------------------------------//
