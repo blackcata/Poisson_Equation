@@ -107,7 +107,7 @@ int main(int argc, char* argv[])
     //            = 3 : MPI I/O                                               //
     //------------------------------------------------------------------------//
     BC         = 1;
-    method     = 1;
+    method     = 2;
     write_type = 1;
 
     mpi_xsize  = 2;
@@ -119,7 +119,6 @@ int main(int argc, char* argv[])
 
     free(u);
     free(u_anal);
-
 
     return 0;
 }

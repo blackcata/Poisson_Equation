@@ -40,10 +40,23 @@ void SOR(double **p,double dx, double dy, double tol, double omega,
 
         for (i=1;i<ROW-1;i++){
             for (j=1;j<COL-1;j++){
-                p_new[i][j] =  (p[i+1][j]+p_new[i-1][j]
-                                + pow(beta,2) *(p[i][j+1]+p_new[i][j-1])
-                                - dx*dx*func(i,j,dx,dy))/(2*(1+pow(beta,2)));
-                p_new[i][j] = p[i][j] + omega * (p_new[i][j] - p[i][j]);
+                if((i+j)%2==0){
+                  p_new[i][j] =  (p[i+1][j]+p[i-1][j]
+                                  + pow(beta,2) *(p[i][j+1]+p[i][j-1])
+                                  - dx*dx*func(i,j,dx,dy))/(2*(1+pow(beta,2)));
+                  p_new[i][j] = p[i][j] + omega * (p_new[i][j] - p[i][j]);
+                }
+            }
+        }
+
+        for (i=1;i<ROW-1;i++){
+            for (j=1;j<COL-1;j++){
+                if((i+j)%2==1){
+                  p_new[i][j] =  (p_new[i+1][j]+p_new[i-1][j]
+                                  + pow(beta,2) *(p_new[i][j+1]+p_new[i][j-1])
+                                  - dx*dx*func(i,j,dx,dy))/(2*(1+pow(beta,2)));
+                  p_new[i][j] = p[i][j] + omega * (p_new[i][j] - p[i][j]);
+                }
             }
         }
 
