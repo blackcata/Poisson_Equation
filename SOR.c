@@ -202,41 +202,59 @@ void SOR(double **p,double dx, double dy, double tol, double omega,
 
 
         //--------------------------------------------------------------------//
-        //                       Convergence Criteria                         //
+        //                        Convergence Criteria                        //
         //--------------------------------------------------------------------//
-        for (i=1;i<ROW-1;i++){
-            for (j=1;j<COL-1;j++){
-                SUM1 += fabs(p_new[i][j]);
-                SUM2 += fabs(p_new[i+1][j] + p_new[i-1][j]
-                             + pow(beta,2)*(p_new[i][j+1] + p_new[i][j-1])
-                             - (2+2*pow(beta,2))*p_new[i][j]-dx*dx*func(i,j,dx,dy));
+        for (i=2;i<mpi_info.nx_mpi;i++){
+            for (j=2;j<mpi_info.ny_mpi;j++){
+                SUM1_loc += fabs(p_new[i][j]);
+                SUM2_loc += fabs(p_new[i+1][j] + p_new[i-1][j]
+                                 + pow(beta,2)*(p_new[i][j+1] + p_new[i][j-1])
+                                 - (2+2*pow(beta,2))*p_new[i][j]
+                                 - dx*dx*func(i+ista-1,j+jsta-1,dx,dy));
             }
         }
+        MPI_Allreduce(&SUM1_loc,&SUM1,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+        MPI_Allreduce(&SUM2_loc,&SUM2,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
 
         if ( SUM2/SUM1 < tol ){
-           for (i=0;i<ROW;i++){
-              for (j=0;j<COL;j++){
-                p_tmp[ROW*i+j] = p[i][j];
-              }
-            }
 
             *iter = it;
             end_t = clock();
             *tot_time = (double)(end_t - start_t)/(CLOCKS_PER_SEC);
-            write_u(dir_name,file_name,write_type,p_tmp,dx,dy);
+
+            //----------------------------------------------------------------//
+            //                      Writing functions                         //
+            //----------------------------------------------------------------//
+            sprintf(loc_name,"%d.%s",mpi_info.myrank,file_name);
+            sprintf(file_path,"%s%s",dir_name,loc_name);
+            printf("%s %s\n",loc_name,file_path);
+
+            stream=fopen(file_path,"w");
+            fprintf(stream,"ZONE I=%d J=%d \n",mpi_info.ny_mpi,mpi_info.nx_mpi);
+            for (i=1;i<=mpi_info.nx_mpi;i++){
+                for (j=1;j<=mpi_info.ny_mpi;j++){
+                    fprintf(stream,"%f %f %f \n",(i+ista-1)*dx,(j+jsta-1)*dy,
+                                                 p_new[i][j]);
+                }
+            }
+            fclose(stream);
 
             free(p_tmp);
             free(p_new);
             break;
         }
-        // printf("Iteration : %d, SUM1 : %f, SUM2 : %f, Ratio : %f \n",it,SUM1,SUM2,SUM2/SUM1);
+        if(mpi_info.myrank==0)
+         printf("Iteration : %d, SUM1 : %f, SUM2 : %f, Ratio : %f \n",
+                                                       it,SUM1,SUM2,SUM2/SUM1);
 
         //--------------------------------------------------------------------//
         //                               Update                               //
         //--------------------------------------------------------------------//
-        for (i=0;i<ROW;i++){
-            for (j=0;j<COL;j++){
-                p[i][j] = p_new[i][j];}}
+        for (i=1;i<=mpi_info.nx_mpi;i++){
+            for (j=1;j<=mpi_info.ny_mpi;j++){
+              p_loc[i][j] = p_new[i][j];
+            }
+        }
 
     }
 }
