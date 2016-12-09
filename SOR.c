@@ -92,28 +92,46 @@ void SOR(double **p,double dx, double dy, double tol, double omega,
     //                        Main Loop of SOR method                         //
     //------------------------------------------------------------------------//
     for (it=1;it<itmax;it++){
-        SUM1 = 0;
-        SUM2 = 0;
+        SUM1_loc = 0;
+        SUM2_loc = 0;
 
-        for (i=1;i<ROW-1;i++){
-            for (j=1;j<COL-1;j++){
-                if((i+j)%2==0){
-                  p_new[i][j] =  (p[i+1][j]+p[i-1][j]
-                                  + pow(beta,2) *(p[i][j+1]+p[i][j-1])
-                                  - dx*dx*func(i,j,dx,dy))/(2*(1+pow(beta,2)));
-                  p_new[i][j] = p[i][j] + omega * (p_new[i][j] - p[i][j]);
-                }
-            }
-        }
+        //--------------------------------------------------------------------//
+        //                          Update red nodes                          //
+        //--------------------------------------------------------------------//
+        send_north(p_loc, mpi_info.nx_mpi, mpi_info.ny_mpi, &mpi_info);
+        send_south(p_loc, mpi_info.nx_mpi, mpi_info.ny_mpi, &mpi_info);
+        send_west(p_loc,  mpi_info.nx_mpi, mpi_info.ny_mpi, &mpi_info);
+        send_east(p_loc,  mpi_info.nx_mpi, mpi_info.ny_mpi, &mpi_info);
 
-        for (i=1;i<ROW-1;i++){
-            for (j=1;j<COL-1;j++){
-                if((i+j)%2==1){
-                  p_new[i][j] =  (p_new[i+1][j]+p_new[i-1][j]
-                                  + pow(beta,2) *(p_new[i][j+1]+p_new[i][j-1])
-                                  - dx*dx*func(i,j,dx,dy))/(2*(1+pow(beta,2)));
-                  p_new[i][j] = p[i][j] + omega * (p_new[i][j] - p[i][j]);
-                }
+         for (i=1;i<=mpi_info.nx_mpi;i++){
+             for (j=1;j<=mpi_info.ny_mpi;j++){
+               if ((i+ista-1+j+jsta-1)%2 == 0 ) {
+                 p_new[i][j] =  (p_loc[i+1][j]+p_loc[i-1][j]
+                                 + pow(beta,2) *(p_loc[i][j+1]+p_loc[i][j-1])
+                                 - dx*dx*func(i+ista-1,j+jsta-1,dx,dy))
+                                                           /(2*(1+pow(beta,2)));
+                 p_new[i][j] = p_loc[i][j] + omega * (p_new[i][j] - p_loc[i][j]);
+               }
+             }
+         }
+
+         //--------------------------------------------------------------------//
+         //                        Update black nodes                          //
+         //--------------------------------------------------------------------//
+         send_north(p_new, mpi_info.nx_mpi, mpi_info.ny_mpi, &mpi_info);
+         send_south(p_new, mpi_info.nx_mpi, mpi_info.ny_mpi, &mpi_info);
+         send_west(p_new,  mpi_info.nx_mpi, mpi_info.ny_mpi, &mpi_info);
+         send_east(p_new,  mpi_info.nx_mpi, mpi_info.ny_mpi, &mpi_info);
+
+        for (i=1;i<=mpi_info.nx_mpi;i++){
+            for (j=1;j<=mpi_info.ny_mpi;j++){
+              if ((i+ista-1+j+jsta-1)%2 == 1 ) {
+                p_new[i][j] =  (p_new[i+1][j]+p_new[i-1][j]
+                                + pow(beta,2) *(p_new[i][j+1]+p_new[i][j-1])
+                                - dx*dx*func(i+ista-1,j+jsta-1,dx,dy))
+                                                          /(2*(1+pow(beta,2)));
+                p_new[i][j] = p_loc[i][j] + omega * (p_new[i][j] - p_loc[i][j]);
+              }
             }
         }
 
