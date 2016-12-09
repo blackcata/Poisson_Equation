@@ -15,7 +15,7 @@ void Jacobi(double **p,double dx, double dy, double tol,
             double *tot_time, int *iter, int BC, int mpi_xsize, int mpi_ysize,
             char* file_name, char* dir_name,int write_type);
 void SOR(double **p,double dx, double dy, double tol, double omega,
-         double *tot_time, int *iter,int BC,
+         double *tot_time, int *iter,int BC, int mpi_xsize, int mpi_ysize,
          char* file_name, char* dir_name,int write_type);
 void Conjugate_Gradient(double **p,double dx, double dy, double tol,
                         double *tot_time,int *iter,int BC,
@@ -79,7 +79,8 @@ void poisson_solver(double **u, double **u_anal, double tol, double omega,
        file_name = "SOR_result.plt";
 
        initialization(u);
-       SOR(u,dx,dy,tol,omega,&tot_time,&iter,BC,file_name,dir_name,write_type);
+       SOR(u,dx,dy,tol,omega,&tot_time,&iter,BC,mpi_xsize,mpi_ysize,
+                                      file_name,dir_name,write_type);
        error_rms(u,u_anal,&err);
 
        if(myrank==0) {

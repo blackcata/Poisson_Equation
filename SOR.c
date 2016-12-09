@@ -2,10 +2,28 @@
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
+#include <mpi.h>
 
 #include "def.h"
 
 double func(int i, int j, double dx, double dy);
+
+//----------------------------------------------------------------------------//
+//                     MPI TYPE, MPI setting functions                        //
+//----------------------------------------------------------------------------//
+typedef struct mympi{
+    int rank_sur[4];
+    int nprocs;
+    int myrank;
+    int nx_mpi,ny_mpi;
+    int mpisize_x,mpisize_y,mpirank_x,mpirank_y;
+} MYMPI;
+
+void mpi_setup(int nx, int ny, int mpi_xsize, int mpi_ysize, MYMPI *mpi_info);
+void send_north(double **u, int nx_mpi, int ny_mpi, MYMPI *mpi_info);
+void send_south(double **u, int nx_mpi, int ny_mpi, MYMPI *mpi_info);
+void send_west(double **u,  int nx_mpi, int ny_mpi, MYMPI *mpi_info);
+void send_east(double **u,  int nx_mpi, int ny_mpi, MYMPI *mpi_info);
 
 //----------------------------------------------------------------------------//
 //                                                                            //
@@ -13,18 +31,44 @@ double func(int i, int j, double dx, double dy);
 //                                                                            //
 //----------------------------------------------------------------------------//
 void SOR(double **p,double dx, double dy, double tol, double omega,
-         double *tot_time, int *iter,int BC,
+         double *tot_time, int *iter,int BC, int mpi_xsize, int mpi_ysize,
          char* file_name, char* dir_name,int write_type)
 {
     int i,j,k,it;
+    int Nx,Ny,ista,iend,jsta,jend;
     double beta,rms;
-    double SUM1,SUM2;
+    double SUM1 = 0,SUM2 = 0,SUM1_loc,SUM2_loc;
     double *p_tmp;
-    double **p_new;
+    double **p_new, **p_loc;
     time_t start_t =0, end_t =0;
+    char loc_name[50],file_path[50];
+    FILE* stream;
+    MYMPI mpi_info;
 
     start_t = clock();
     beta = dx/dy;
+
+    //----------------------------------------------------------------------//
+    //                             MPI Setting                              //
+    //----------------------------------------------------------------------//
+    MPI_Comm_size(MPI_COMM_WORLD,&mpi_info.nprocs);
+    MPI_Comm_rank(MPI_COMM_WORLD,&mpi_info.myrank);
+
+    mpi_setup(ROW,COL,mpi_xsize,mpi_ysize,&mpi_info);
+
+    ista = mpi_info.mpirank_x*mpi_info.nx_mpi;
+    iend = ista + mpi_info.nx_mpi -1;
+    jsta = mpi_info.mpirank_y*mpi_info.ny_mpi;
+    jend = jsta + mpi_info.ny_mpi -1;
+
+    printf("Myrank : %d\n",mpi_info.myrank);
+    printf("mpirank_x : %d, mpirank_y : %d\n",mpi_info.mpirank_x,mpi_info.mpirank_y);
+    printf("nx_mpi : %d, ny_mpi : %d\n",mpi_info.nx_mpi,mpi_info.ny_mpi);
+    printf("mpisize_x : %d, mpisize_y : %d\n",mpi_info.mpisize_x,mpi_info.mpisize_y);
+    printf("(%d,%d) X (%d,%d)\n",ista,iend,jsta,jend);
+    printf("e_rank : %d, w_rank : %d, s_rank : %d, n_rank : %d \n",
+    mpi_info.rank_sur[0],mpi_info.rank_sur[1],mpi_info.rank_sur[2],mpi_info.rank_sur[3]);
+    printf("\n");
 
     p_tmp = (double *) malloc((COL*ROW) *sizeof(double));
     p_new = (double **) malloc(ROW *sizeof(double));
