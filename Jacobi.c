@@ -5,6 +5,7 @@
 #include <mpi.h>
 
 #include "def.h"
+
 double func(int i, int j, double dx, double dy);
 
 //----------------------------------------------------------------------------//
@@ -23,6 +24,9 @@ void send_north(double **u, int nx_mpi, int ny_mpi, MYMPI *mpi_info);
 void send_south(double **u, int nx_mpi, int ny_mpi, MYMPI *mpi_info);
 void send_west(double **u,  int nx_mpi, int ny_mpi, MYMPI *mpi_info);
 void send_east(double **u,  int nx_mpi, int ny_mpi, MYMPI *mpi_info);
+
+void boundary_condition(int BC,double ista,double iend,double jsta,double jend,
+                        double dx, double dy, double **p_new, MYMPI *mpi_info);
 
 //----------------------------------------------------------------------------//
 //                                                                            //
@@ -111,67 +115,7 @@ void Jacobi(double **p,double dx, double dy, double tol,
         //--------------------------------------------------------------------//
         //                        Boundary conditions                         //
         //--------------------------------------------------------------------//
-
-        //--------------------------------------//
-        //           Boundary - Case 1          //
-        //--------------------------------------//
-        if (BC == 1){
-           if(ista == 0){
-             for (j=1;j<=mpi_info.ny_mpi;j++){
-               p_new[1][j] = 0;
-             }
-           }
-
-           if(iend == ROW-1){
-             for (j=1;j<=mpi_info.ny_mpi;j++){
-               p_new[mpi_info.nx_mpi][j] = 0;
-             }
-           }
-
-           if(jsta == 0){
-             for (i=1;i<=mpi_info.nx_mpi;i++){
-               p_new[i][1] = p_new[i][2];
-             }
-           }
-
-           if(jend == COL-1){
-             for (i=1;i<=mpi_info.nx_mpi;i++){
-               p_new[i][mpi_info.ny_mpi] = p_new[i][mpi_info.ny_mpi-1];
-             }
-           }
-
-        }
-        //--------------------------------------//
-        //           Boundary - Case 2          //
-        //--------------------------------------//
-        else if (BC ==2){
-          if(ista == 0){
-            for (j=1;j<=mpi_info.ny_mpi;j++){
-              p_new[1][j] = -1/(2*pow(pi,2))*func(ista,j+jsta-1,dx,dy);
-            }
-          }
-
-          if(iend == ROW-1){
-            for (j=1;j<=mpi_info.ny_mpi;j++){
-              p_new[mpi_info.nx_mpi][j] = -1/(2*pow(pi,2))
-                                   *func(mpi_info.nx_mpi-1+ista,j+jsta-1,dx,dy);
-            }
-          }
-
-          if(jsta == 0){
-            for (i=1;i<=mpi_info.nx_mpi;i++){
-              p_new[i][1] = -1/(2*pow(pi,2))*func(i+ista-1,jsta,dx,dy);
-            }
-          }
-
-          if(jend == COL-1){
-            for (i=1;i<=mpi_info.nx_mpi;i++){
-              p_new[i][mpi_info.ny_mpi] = -1/(2*pow(pi,2))
-                                   *func(i+ista-1,mpi_info.ny_mpi+jsta-1,dx,dy);
-            }
-          }
-
-        }
+        boundary_condition(BC,ista,iend,jsta,jend,dx,dy,p_new,&mpi_info);
 
         //--------------------------------------------------------------------//
         //                        Convergence Criteria                        //
@@ -228,4 +172,75 @@ void Jacobi(double **p,double dx, double dy, double tol,
             }
         }
     }
+}
+
+void boundary_condition(int BC,double ista,double iend,double jsta,double jend,
+                        double dx, double dy, double **p_new, MYMPI *mpi_info)
+{
+    int i,j;
+
+    //--------------------------------------------------------------------//
+    //                        Boundary conditions                         //
+    //--------------------------------------------------------------------//
+
+    //--------------------------------------//
+    //           Boundary - Case 1          //
+    //--------------------------------------//
+    if (BC == 1){
+       if(ista == 0){
+         for (j=1;j<=mpi_info->ny_mpi;j++){
+           p_new[1][j] = 0;
+         }
+       }
+
+       if(iend == ROW-1){
+         for (j=1;j<=mpi_info->ny_mpi;j++){
+           p_new[mpi_info->nx_mpi][j] = 0;
+         }
+       }
+
+       if(jsta == 0){
+         for (i=1;i<=mpi_info->nx_mpi;i++){
+           p_new[i][1] = p_new[i][2];
+         }
+       }
+
+       if(jend == COL-1){
+         for (i=1;i<=mpi_info->nx_mpi;i++){
+           p_new[i][mpi_info->ny_mpi] = p_new[i][mpi_info->ny_mpi-1];
+         }
+       }
+
+    }
+    //--------------------------------------//
+    //           Boundary - Case 2          //
+    //--------------------------------------//
+    else if (BC ==2){
+      if(ista == 0){
+        for (j=1;j<=mpi_info->ny_mpi;j++){
+          p_new[1][j] = -1/(2*pow(pi,2))*func(ista,j+jsta-1,dx,dy);
+        }
+      }
+
+      if(iend == ROW-1){
+        for (j=1;j<=mpi_info->ny_mpi;j++){
+          p_new[mpi_info->nx_mpi][j] = -1/(2*pow(pi,2))
+                               *func(mpi_info->nx_mpi-1+ista,j+jsta-1,dx,dy);
+        }
+      }
+
+      if(jsta == 0){
+        for (i=1;i<=mpi_info->nx_mpi;i++){
+          p_new[i][1] = -1/(2*pow(pi,2))*func(i+ista-1,jsta,dx,dy);
+        }
+      }
+
+      if(jend == COL-1){
+        for (i=1;i<=mpi_info->nx_mpi;i++){
+          p_new[i][mpi_info->ny_mpi] = -1/(2*pow(pi,2))
+                               *func(i+ista-1,mpi_info->ny_mpi+jsta-1,dx,dy);
+        }
+      }
+    }
+
 }
