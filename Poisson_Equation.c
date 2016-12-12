@@ -110,8 +110,8 @@ int main(int argc, char* argv[])
     method     = 2;
     write_type = 1;
 
-    mpi_xsize  = 2;
-    mpi_ysize  = 2;
+    mpi_xsize  = atof(argv[1]);
+    mpi_ysize  = atof(argv[2]);
 
     poisson_solver(u,u_anal,tol,omega,BC,method,mpi_xsize,mpi_ysize,
                                                            write_type,dir_name);
