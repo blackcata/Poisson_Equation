@@ -41,7 +41,6 @@ void Jacobi(double **p,double dx, double dy, double tol,
     int Nx,Ny,ista,iend,jsta,jend;
     double beta,rms;
     double SUM1 = 0,SUM2 = 0,SUM1_loc,SUM2_loc;
-    double *p_tmp;
     double **p_new, **p_loc;
     time_t start_t =0, end_t =0;
     char loc_name[50],file_path[50];
@@ -76,7 +75,6 @@ void Jacobi(double **p,double dx, double dy, double tol,
     //------------------------------------------------------------------------//
     //                          Memory Allocation                             //
     //------------------------------------------------------------------------//
-    p_tmp = (double *) malloc((COL*ROW/mpi_info.nprocs)*sizeof(double));
     p_loc = (double **) malloc((ROW/mpi_xsize+2)*sizeof(double));
     p_new = (double **) malloc((ROW/mpi_xsize+2)*sizeof(double));
 
@@ -155,7 +153,6 @@ void Jacobi(double **p,double dx, double dy, double tol,
             }
             fclose(stream);
 
-            free(p_tmp);
             free(p_new);
             break;
         }
