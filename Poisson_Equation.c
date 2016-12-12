@@ -62,17 +62,6 @@ int main(int argc, char* argv[])
     MPI_Comm_size(MPI_COMM_WORLD,&nprocs);
     MPI_Comm_rank(MPI_COMM_WORLD,&myrank);
 
-    if (nprocs != atoi(argv[1])*atoi(argv[2])) {
-      if (myrank ==0) {
-        printf("%s\n","----------------------------------------------------------");
-        printf("%s\n","                      MISMATCH ERROR                      ");
-        printf("%s\n","The number of cores and (mpi_xsize) X (mpi_ysize) mismatch");
-        printf("Nprocs : %d, (mpi_xsize) X (mpi_ysize) : %d X %d = %d \n",
-                    nprocs,atoi(argv[1]),atoi(argv[2]),atoi(argv[1])*atoi(argv[2]));
-        printf("%s\n","----------------------------------------------------------");
-      }
-      exit(1);
-    }
     //------------------------------------------------------------------------//
     //                           Memory allocation                            //
     //------------------------------------------------------------------------//
@@ -119,11 +108,25 @@ int main(int argc, char* argv[])
     //            = 3 : MPI I/O                                               //
     //------------------------------------------------------------------------//
     BC         = 1;
-    method     = 2;
+    method     = 3;
     write_type = 1;
 
-    mpi_xsize  = atof(argv[1]);
-    mpi_ysize  = atof(argv[2]);
+    if (method != 3){
+      mpi_xsize  = atof(argv[1]);
+      mpi_ysize  = atof(argv[2]);
+
+      if (nprocs != atoi(argv[1])*atoi(argv[2])) {
+        if (myrank ==0) {
+          printf("%s\n","----------------------------------------------------------");
+          printf("%s\n","                      MISMATCH ERROR                      ");
+          printf("%s\n","The number of cores and (mpi_xsize) X (mpi_ysize) mismatch");
+          printf("Nprocs : %d, (mpi_xsize) X (mpi_ysize) : %d X %d = %d \n",
+                      nprocs,atoi(argv[1]),atoi(argv[2]),atoi(argv[1])*atoi(argv[2]));
+          printf("%s\n","----------------------------------------------------------");
+        }
+        exit(1);
+      }
+    }
 
     poisson_solver(u,u_anal,tol,omega,BC,method,mpi_xsize,mpi_ysize,
                                                            write_type,dir_name);
