@@ -81,18 +81,6 @@ int main(int argc, char* argv[])
     omega = 1.9;
     dir_name = "./RESULT/";
 
-    if (myrank == 0 ){
-      int make_fold= system("mkdir RESULT");
-      printf("\n");
-      printf("%s\n","----------------------------------------------------------");
-      printf("%s\n","             Poisson Equation Initial Setting             ");
-      printf("Nx : %d, Ny : %d\n",ROW,COL);
-      printf("Tolerance : %f, Omega : %f \n",tol, omega);
-      printf("%s\n","----------------------------------------------------------");
-      printf("\n");
-    }
-    MPI_Barrier(MPI_COMM_WORLD);
-
     //------------------------------------------------------------------------//
     //                        Poisson Solver Type                             //
     //                                                                        //
@@ -108,25 +96,63 @@ int main(int argc, char* argv[])
     //            = 3 : MPI I/O                                               //
     //------------------------------------------------------------------------//
     BC         = 1;
-    method     = 3;
+    method     = 1;
     write_type = 1;
 
     if (method != 3){
+      if (argc < 3) {
+        if (myrank==0){
+        printf("%s\n","----------------------------------------------------------");
+        printf("%s\n","                 <<< NO-INPUT WARNING >>>                 ");
+        printf("%s\n","       You have to determine (mpi_xsize),(mpi_ysize)      ");
+        printf("%s\n","       ex) mpirun -np=4 Poisson_Equation 2 2              ");
+        printf("%s\n","                                                          ");
+        printf("%s\n","         PROGRAM POISSON IS FORCIBLYY TERMINATED          ");
+        printf("%s\n","----------------------------------------------------------");
+        }
+        exit(1);
+      }
       mpi_xsize  = atof(argv[1]);
       mpi_ysize  = atof(argv[2]);
 
       if (nprocs != atoi(argv[1])*atoi(argv[2])) {
         if (myrank ==0) {
           printf("%s\n","----------------------------------------------------------");
-          printf("%s\n","                      MISMATCH ERROR                      ");
+          printf("%s\n","                 <<< MISMATCH ERROR >>>                   ");
           printf("%s\n","The number of cores and (mpi_xsize) X (mpi_ysize) mismatch");
           printf("Nprocs : %d, (mpi_xsize) X (mpi_ysize) : %d X %d = %d \n",
                       nprocs,atoi(argv[1]),atoi(argv[2]),atoi(argv[1])*atoi(argv[2]));
+          printf("%s\n","                                                          ");
+          printf("%s\n","         PROGRAM POISSON IS FORCIBLYY TERMINATED          ");
           printf("%s\n","----------------------------------------------------------");
         }
         exit(1);
       }
     }
+
+    if (myrank == 0 ){
+      int make_fold= system("mkdir RESULT");
+      printf("\n");
+      printf("%s\n","----------------------------------------------------------");
+      printf("%s\n","             Poisson Equation Initial Setting             ");
+      printf("Nx : %d, Ny : %d\n",ROW,COL);
+      printf("Tolerance : %f, Omega : %f \n",tol, omega);
+      switch (method) {
+        case 1 : printf("Method : Jacobi method \n");
+          break;
+
+        case 2 :
+          printf("Method : SOR method \n");
+          break;
+
+        case 3:
+          printf("Method : Conjugate Gradient method \n");
+          break;
+      }
+      printf("%s\n","----------------------------------------------------------");
+      printf("\n");
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
 
     poisson_solver(u,u_anal,tol,omega,BC,method,mpi_xsize,mpi_ysize,
                                                            write_type,dir_name);
