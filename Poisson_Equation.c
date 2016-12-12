@@ -55,12 +55,24 @@ int main(int argc, char* argv[])
 
     char *dir_name ;
 
-    int i, method, BC, myrank, write_type, mpi_xsize, mpi_ysize;
+    int i, method, BC, myrank, nprocs, write_type, mpi_xsize, mpi_ysize;
     double tol, omega;
 
     MPI_Init(&argc,&argv);
+    MPI_Comm_size(MPI_COMM_WORLD,&nprocs);
     MPI_Comm_rank(MPI_COMM_WORLD,&myrank);
 
+    if (nprocs != atoi(argv[1])*atoi(argv[2])) {
+      if (myrank ==0) {
+        printf("%s\n","----------------------------------------------------------");
+        printf("%s\n","                      MISMATCH ERROR                      ");
+        printf("%s\n","The number of cores and (mpi_xsize) X (mpi_ysize) mismatch");
+        printf("Nprocs : %d, (mpi_xsize) X (mpi_ysize) : %d X %d = %d \n",
+                    nprocs,atoi(argv[1]),atoi(argv[2]),atoi(argv[1])*atoi(argv[2]));
+        printf("%s\n","----------------------------------------------------------");
+      }
+      exit(1);
+    }
     //------------------------------------------------------------------------//
     //                           Memory allocation                            //
     //------------------------------------------------------------------------//
@@ -77,17 +89,17 @@ int main(int argc, char* argv[])
     //                             Initial setting                            //
     //------------------------------------------------------------------------//
     tol = 1e-6;
-    omega = 1.8;
+    omega = 1.9;
     dir_name = "./RESULT/";
 
     if (myrank == 0 ){
       int make_fold= system("mkdir RESULT");
       printf("\n");
-      printf("---------------------------------------- \n");
-      printf("    Poisson Equation Initial Setting \n");
+      printf("%s\n","----------------------------------------------------------");
+      printf("%s\n","             Poisson Equation Initial Setting             ");
       printf("Nx : %d, Ny : %d\n",ROW,COL);
       printf("Tolerance : %f, Omega : %f \n",tol, omega);
-      printf("---------------------------------------- \n");
+      printf("%s\n","----------------------------------------------------------");
       printf("\n");
     }
     MPI_Barrier(MPI_COMM_WORLD);
